@@ -74,3 +74,10 @@ events:<subscription Id>\n
 ...
 ```
 Normally clients will gather a potentially longer list of events and then send Event Id queries in segments according to the requirements of the user interface.
+
+The results are returned as a series as follows, for each item returned:
+
+```
+event:<subscription Id>:<Event Id>\n
+<event>
+```
