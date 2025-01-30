@@ -6,6 +6,8 @@ Line structured documents are much more readily amenable to human reading and ed
 
 It is one of the guiding principles of the Unix philosophy to keep data in plain text, human readable format wherever possible, forcing the interposition of a parser just for humans to read the data adds extra brittleness to a protocol.
 
+REALY protocol format is extremely simple and should be trivial to parse in any programming language with basic string slicing operators.
+
 ## Events
 
 So, this is how realy events look:
@@ -14,9 +16,9 @@ So, this is how realy events look:
 <type name>\n
 <pubkey>\n // encoded in URL-base64
 <unix second precision timestamp in decimal ascii>\n
-key:value;extra;...\n // zero or more line separated, fields cannot contain a semicolon, end with newline instead of semicolon, key lowercase alphanumeric, first alpha, only key is mandatory, only reserved is `content`
-content: // literally this word on one line
-<content>\n // any number of further line breaks, last line is signature
+key:value;extra;...\n // zero or more line separated, fields cannot contain a semicolon, end with newline instead of semicolon, key lowercase alphanumeric, first alpha, no whitespace or symbols, only key is mandatory, only reserved is `content`
+content:\n // literally this word on one line
+<content>\n // any number of further line breaks, last line is signature, everything before signature line is part of the canonical hash
 <ed25519 signature encoded in URL-base64>\n
 ```
 
@@ -56,7 +58,7 @@ The results must be in reverse chronological order so the client knows it can pa
 
 If instead of `filter\n` at the top there is `subscribe:<subscription Id>\n` the relay should return any events it finds the Id for and then subsequently will forward the Event Id of any new matching event that comes in until the client sends a `close:<subscription Id>\n` message.
 
-Once all stored events are returned, the relay will send `end:<subscription Id>\n` to notify the client the query is finished. If the client wants a subscription it must use `subscribe`.
+Once all stored events are returned, the relay will send `end:<subscription Id>\n` to notify the client the query is finished. If the client wants a subscription it must use `subscribe`. The client should end subscriptions with `close:<subscription Id>\n` or if the socket is closed.
 
 ### Text
 
