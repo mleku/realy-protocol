@@ -6,6 +6,8 @@ Line structured documents are much more readily amenable to human reading and ed
 
 It is one of the guiding principles of the Unix philosophy to keep data in plain text, human readable format wherever possible, forcing the interposition of a parser just for humans to read the data adds extra brittleness to a protocol.
 
+## Events
+
 So, this is how realy events look:
 
 ```
@@ -15,11 +17,58 @@ So, this is how realy events look:
 key:value;extra;...\n // zero or more line separated, fields cannot contain a semicolon, end with newline instead of semicolon, key lowercase alphanumeric, first alpha, only key is mandatory, only reserved is `content`
 content: // literally this word on one line
 <content>\n // any number of further line breaks, last line is signature
-<bip-340 schnorr signature encoded in URL-base64>\n
+<ed25519 signature encoded in URL-base64>\n
 ```
 
-The canonical form is exactly this, except for the signature and following linebreak, hashed with Blake2b
+The canonical form is exactly this, except for the signature and following linebreak, hashed with Blake2b.
 
 The database stored form of this event should make use of an event ID hash to monotonic collision free serial table and an event table.
 
-Event ID hashes will be encoded in URL-base64 where used in tags or mentioned in content with the prefix `event:`. Public keys must be prefixed with `pubkey:` Tag keys should be intelligible words and a specification for their structure should be defined by users of them and shared with other REALY devs.
+Event ID hashes will be encoded in URL-base64 where used in tags or mentioned in content with the prefix `e:`. Public keys must be prefixed with `p:` Tag keys should be intelligible words and a specification for their structure should be defined by users of them and shared with other REALY devs.
+
+Indexing tags should be done with a truncated Blake2b hash cut at 8 bytes in the event store.
+
+Submitting an event to be stored is the same as a result sent from an Event Id query except with the type of operation inteded: `store\n` to store an event, `replace:<Event Id>\n` to replace an existing event and `relay\n` to not store but send to subscribers with open matching filters.
+
+An event is then acknowledged to be stored or rejected with a message `ok:<true/false>;<Event Id>;<reason type>:human readable part` where the reason type is one of a set of common types to indicate the reason for the false
+
+Events that are returned have the `<subscription Id>:<Event Id>\n` as the first line.
+
+## Queries
+
+There is three types of queries in REALY:
+
+### Filter
+
+A filter has one or more of the fields listed below, and headed with `filter`:
+
+```
+filter:<subscription Id>\n
+pubkeys:<one>;<two>;...\n // these match as OR
+timestamp:<since>;<until\n // either can be empty but not both, omit line for this, both are inclusive
+tags:
+<key>:<value>\n // indexes are not required or used for more than the key and value
+... // several matches can be present, they will act as OR
+```
+The result returned from this is a newline separated list of event ID hashes encoded in base64, a following Event Id search is required to retrieve them. This obviates the need for pagination as the 45 bytes per event per result is far less than sending the whole event and the client is then free to paginate how they like without making for an onerous implementation requirement or nebulous result limit specification.
+
+The results must be in reverse chronological order so the client knows it can paginate them from newest to oldest as required by the user interface.
+
+If instead of `filter\n` at the top there is `subscribe:<subscription Id>\n` the relay should return any events it finds the Id for and then subsequently will forward the Event Id of any new matching event that comes in until the client sends a `close:<subscription Id>\n` message.
+
+Once all stored events are returned, the relay will send `end:<subscription Id>\n` to notify the client the query is finished. If the client wants a subscription it must use `subscribe`.
+
+### Text
+
+A text search is just `search:<subscription Id>:` followed by a series of space separated tokens if the event store has a full text index, terminated with a newline.
+
+### Event Id
+
+Event requests are as follows:
+
+```
+events:<subscription Id>\n
+<one>\n
+...
+```
+Normally clients will gather a potentially longer list of events and then send Event Id queries in segments according to the requirements of the user interface.
