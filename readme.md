@@ -7,10 +7,11 @@
 
 zap mleku: ⚡️mleku@getalby.com
 
-Inspired by the event bus architecture of [nostr](https://github.com/nostr-protocol) but redesigned to avoid the serious deficiencies of that protocol for both developers and users.
+Inspired by the event bus architecture of [nostr](https://github.com/nostr-protocol) but redesigned to avoid the 
+serious deficiencies of that protocol for both developers and users.
 
-- [why](./why.md)
-- [event spec](./spec.md)
+- [why](./doc/why.md)
+- [event spec](./doc/spec.md)
 - [reference relays](./relays/readme.md)
 - [reference clients](./clients/readme.md)
 - [GO libraries](./pkg/readme.md)
