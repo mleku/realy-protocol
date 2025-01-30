@@ -6,4 +6,7 @@ Inspired by the event bus architecture of [nostr](https://github.com/nostr-proto
 
 - [why](./why.md)
 - [event spec](./spec.md)
-  
+- [matrix chat](https://matrix.to/#/#realy-general:matrix.org)
+- [reference relays](./relays/readme.md)
+- [reference clients](./clients/readme.md)
+- [GO libraries](./pkg/readme.md)
