@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-const Len = 88
+const Len = 86
 
 type S struct{ Signature []byte }
 
@@ -33,7 +33,7 @@ func (p *S) Marshal(dst []byte) (result []byte, err error) {
 		return
 	}
 	buf := bytes.NewBuffer(result)
-	w := base64.NewEncoder(base64.URLEncoding, buf)
+	w := base64.NewEncoder(base64.RawURLEncoding, buf)
 	if _, err = w.Write(p.Signature); chk.E(err) {
 		return
 	}
@@ -62,7 +62,7 @@ func (p *S) Unmarshal(data []byte) (rem []byte, err error) {
 				return
 			}
 			p.Signature = make([]byte, ed25519.SignatureSize)
-			if _, err = base64.URLEncoding.Decode(p.Signature, rem[:i]); chk.E(err) {
+			if _, err = base64.RawURLEncoding.Decode(p.Signature, rem[:i]); chk.E(err) {
 				return
 			}
 			rem = rem[i+1:]

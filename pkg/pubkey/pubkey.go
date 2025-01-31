@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-const Len = 44
+const Len = 43
 
 type P struct{ ed25519.PublicKey }
 
@@ -33,7 +33,7 @@ func (p *P) Marshal(dst []byte) (result []byte, err error) {
 		return
 	}
 	buf := bytes.NewBuffer(result)
-	w := base64.NewEncoder(base64.URLEncoding, buf)
+	w := base64.NewEncoder(base64.RawURLEncoding, buf)
 	if _, err = w.Write(p.PublicKey); chk.E(err) {
 		return
 	}
@@ -62,7 +62,7 @@ func (p *P) Unmarshal(data []byte) (rem []byte, err error) {
 				return
 			}
 			p.PublicKey = make([]byte, ed25519.PublicKeySize)
-			if _, err = base64.URLEncoding.Decode(p.PublicKey, rem[:i]); chk.E(err) {
+			if _, err = base64.RawURLEncoding.Decode(p.PublicKey, rem[:i]); chk.E(err) {
 				return
 			}
 			rem = rem[i+1:]

@@ -24,6 +24,8 @@ content:\n // literally this word on one line *directly* after the newline of th
 
 The canonical form is exactly this, except for the signature and following linebreak, hashed with Blake2b.
 
+The binary data - Event Ids, Pubkeys and Signatures are encoded in raw base64 URL encoding (without padding), Signatures are 86 characters, Ids and Pubkeys are 43 characters long.
+
 The database stored form of this event should make use of an event ID hash to monotonic collision free serial table and an event table.
 
 Event ID hashes will be encoded in URL-base64 where used in tags or mentioned in content with the prefix `e:`. Public keys must be prefixed with `p:` Tag keys should be intelligible words and a specification for their structure should be defined by users of them and shared with other REALY devs.
