@@ -32,7 +32,7 @@ Event ID hashes will be encoded in URL-base64 where used in tags or mentioned in
 
 Indexing tags should be done with a truncated Blake2b hash cut at 8 bytes in the event store.
 
-Submitting an event to be stored is the same as a result sent from an Event Id query except with the type of operation inteded: `store\n` to store an event, `replace:<Event Id>\n` to replace an existing event and `relay\n` to not store but send to subscribers with open matching filters.
+Submitting an event to be stored is the same as a result sent from an Event Id query except with the type of operation inteded: `store\n` to store an event, `replace:<Event Id>\n` to replace an existing event and `relay\n` to not store but send to subscribers with open matching filters. Replace will not be accepted if the message type and pubkey are different to the original that is specified.
 
 An event is then acknowledged to be stored or rejected with a message `ok:<true/false>;<Event Id>;<reason type>:human readable part` where the reason type is one of a set of common types to indicate the reason for the false
 
