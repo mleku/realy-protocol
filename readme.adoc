@@ -1,0 +1,22 @@
+= REALY Protocol
+
+____
+
+relay events and like… yeah
+
+____
+
+image:https://img.shields.io/badge/godoc-documentation-blue.svg[Documentation,link=https://pkg.go.dev/protocol.realy.lol]
+image:https://img.shields.io/badge/matrix-chat-green.svg[matrix chat,link=https://matrix.to/#/#realy-general:matrix.org]
+
+zap mleku: ⚡️mleku@getalby.com
+
+Inspired by the event bus architecture of https://github.com/nostr-protocol[nostr] but redesigned to avoid the
+serious deficiencies of that protocol for both developers and users.
+
+* link:./doc/why.md[why]
+* link:./doc/events_queries.md[events and queries]
+* link:./doc/relays.md[relays]
+* link:./relays/readme.md[reference relays]
+* link:./clients/readme.md[reference clients]
+* link:./pkg/readme.md[GO libraries]

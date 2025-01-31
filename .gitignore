@@ -75,6 +75,7 @@ key
 !.openapi-generator-ignore
 !.gitignore
 !*.jsonl
+!*.adoc
 
 # ...even if they are in subdirectories
 !*/

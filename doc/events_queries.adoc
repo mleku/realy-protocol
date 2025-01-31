@@ -1,4 +1,4 @@
-# realy protocol event specification
+= REALY protocol event/query specification
 
 JSON is awful, and space inefficient, and complex to parse due to its intolerance of terminal commas and annoying to work with because of its retarded, multi-standards of string escaping.
 
@@ -8,19 +8,19 @@ It is one of the guiding principles of the Unix philosophy to keep data in plain
 
 REALY protocol format is extremely simple and should be trivial to parse in any programming language with basic string slicing operators.
 
-## Events
+== Events
 
 So, this is how realy events look:
 
-```
-<type name>\n
+----
+<type name>\n // can be anything, hierarchic names like note/html note/md are possible
 <pubkey>\n // encoded in URL-base64
 <unix second precision timestamp in decimal ascii>\n
 key:value;extra;...\n // zero or more line separated, fields cannot contain a semicolon, end with newline instead of semicolon, key lowercase alphanumeric, first alpha, no whitespace or symbols, only key is mandatory, only reserved is `content`
-content:\n // literally this word on one line
+content:\n // literally this word on one line *directly* after the newline of the previous
 <content>\n // any number of further line breaks, last line is signature, everything before signature line is part of the canonical hash
 <ed25519 signature encoded in URL-base64>\n
-```
+----
 
 The canonical form is exactly this, except for the signature and following linebreak, hashed with Blake2b.
 
@@ -36,22 +36,23 @@ An event is then acknowledged to be stored or rejected with a message `ok:<true/
 
 Events that are returned have the `<subscription Id>:<Event Id>\n` as the first line.
 
-## Queries
+== Queries
 
 There is three types of queries in REALY:
 
-### Filter
+=== Filter
 
 A filter has one or more of the fields listed below, and headed with `filter`:
 
-```
+----
 filter:<subscription Id>\n
 pubkeys:<one>;<two>;...\n // these match as OR
 timestamp:<since>;<until\n // either can be empty but not both, omit line for this, both are inclusive
 tags:
 <key>:<value>\n // indexes are not required or used for more than the key and value
 ... // several matches can be present, they will act as OR
-```
+----
+
 The result returned from this is a newline separated list of event ID hashes encoded in base64, a following Event Id search is required to retrieve them. This obviates the need for pagination as the 45 bytes per event per result is far less than sending the whole event and the client is then free to paginate how they like without making for an onerous implementation requirement or nebulous result limit specification.
 
 The results must be in reverse chronological order so the client knows it can paginate them from newest to oldest as required by the user interface.
@@ -60,24 +61,25 @@ If instead of `filter\n` at the top there is `subscribe:<subscription Id>\n` the
 
 Once all stored events are returned, the relay will send `end:<subscription Id>\n` to notify the client the query is finished. If the client wants a subscription it must use `subscribe`. The client should end subscriptions with `close:<subscription Id>\n` or if the socket is closed.
 
-### Text
+=== Text
 
 A text search is just `search:<subscription Id>:` followed by a series of space separated tokens if the event store has a full text index, terminated with a newline.
 
-### Event Id
+=== Event Id
 
 Event requests are as follows:
 
-```
+----
 events:<subscription Id>\n
 <one>\n
 ...
-```
+----
+
 Normally clients will gather a potentially longer list of events and then send Event Id queries in segments according to the requirements of the user interface.
 
 The results are returned as a series as follows, for each item returned:
 
-```
+----
 event:<subscription Id>:<Event Id>\n
 <event>
-```
+----
