@@ -38,11 +38,15 @@ To enable this, a suffix is added to messages with the following format:
 
 `<message payload>\n` // all messages must be terminated with a newline
 
+`<request URL>\n` // because we aren't signing also on the http header
+
 `<unix timestamp in decimal ascii>:<public key of signer>:<signature>\n`
 
 For reasons of security, a relay should not allow a time skew in the timestamp of more than 15 seconds.
 
-The signature is upon the Blake 2b message hash of everything up to the semicolon preceding it.
+The signature is upon the Blake 2b message hash of everything up to the semicolon preceding it, and only relates to the HTTP POST payload, not including the header.
+
+Even subscription messages should be signed the same way, to avoid needing a secondary protocol. "open" relays that have no access control (which is retarded, but just to be complete) must still require this authentication message, but simply the client can use one-shot keys to sign with, as it also serves as a HMAC to validate the consistency of the request data, since it is based on the hash.
 
 == Events
 
