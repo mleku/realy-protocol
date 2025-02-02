@@ -14,9 +14,9 @@ zap mleku: ⚡️mleku@getalby.com
 Inspired by the event bus architecture of https://github.com/nostr-protocol[nostr] but redesigned to avoid the
 serious deficiencies of that protocol for both developers and users.
 
-* link:./doc/why.md[why]
-* link:./doc/events_queries.md[events and queries]
-* link:./doc/relays.md[relays]
+* link:./doc/why.adoc[why]
+* link:./doc/events_queries.adoc[events and queries]
+* link:./doc/relays.adoc[relays]
 * link:./relays/readme.md[reference relays]
 * link:./clients/readme.md[reference clients]
 * link:./pkg/readme.md[GO libraries]
