@@ -28,6 +28,8 @@ A relay should respond to a `subscribe` request by upgrading from http to a webs
 
 It is unnecessary messages and work to use websockets for queries that match the HTTP request/response pattern, and by only requiring sockets for APIs that actually need server initiated messaging, the complexity of the relay is greatly reduced.
 
+There can be a separate subscription type also, where there is delivering the IDs only, or forwarding the whole event.
+
 == Events
 
 The format of events is as follows - the monospace segments are the exact text, including the necessary linebreak characters, the rest is descriptive.
@@ -99,7 +101,9 @@ The results must be in reverse chronological order so the client knows it can pa
 
 If instead of `filter\n` at the top there is `subscribe:<subscription Id>\n` the relay should return any events it finds the Id for and then subsequently will forward the Event Id of any new matching event that comes in until the client sends a `close:<subscription Id>\n` message.
 
-Once all stored events are returned, the relay will send `end:<subscription Id>\n` to notify the client the query is finished. If the client wants a subscription it must use `subscribe`. The client should end subscriptions with `close:<subscription Id>\n` or if the socket is closed.
+Once all stored events are returned, the relay will send `end:<subscription Id>\n` to notify the client that here after will only be events that just arrived.
+
+`subscribe_full:<subscription Id>` should be used to request the events be directly delivered instead of just the event IDs associated with the subscription filter.
 
 === Text
 
