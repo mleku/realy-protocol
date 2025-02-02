@@ -30,13 +30,27 @@ It is unnecessary messages and work to use websockets for queries that match the
 
 There can be a separate subscription type also, where there is delivering the IDs only, or forwarding the whole event.
 
+=== HTTP Authentication
+
+For the most part, all queries and submissions must be authenticated in order to enable a REALY relay to allow access.
+
+To enable this, a suffix is added to messages with the following format:
+
+`<message payload>\n` // all messages must be terminated with a newline
+
+`<unix timestamp in decimal ascii>:<public key of signer>:<signature>\n`
+
+For reasons of security, a relay should not allow a time skew in the timestamp of more than 15 seconds.
+
+The signature is upon the Blake 2b message hash of everything up to the semicolon preceding it.
+
 == Events
 
 The format of events is as follows - the monospace segments are the exact text, including the necessary linebreak characters, the rest is descriptive.
 
 ---
 
-`<type name>\n` // can be anything, hierarchic names like note/html note/md are possible
+`<type name>\n` // can be anything, hierarchic names like note/html note/md are possible, or type.subtype or whatever
 
 `<pubkey>\n` // encoded in URL-base64 with the padding `=` elided
 

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestP_Marshal_Unmarshal(t *testing.T) {
+func TestT_Marshal_Unmarshal(t *testing.T) {
 	var err error
 	for range 10 {
 		pk := make([]byte, ed25519.PublicKeySize)
