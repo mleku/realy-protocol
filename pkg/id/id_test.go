@@ -14,7 +14,6 @@ func TestT_Marshal_Unmarshal(t *testing.T) {
 		if _, err = rand.Read(pk); chk.E(err) {
 			t.Fatal(err)
 		}
-		log.I.S(pk)
 		var p *P
 		if p, err = New(pk); chk.E(err) {
 			t.Fatal(err)
@@ -23,7 +22,6 @@ func TestT_Marshal_Unmarshal(t *testing.T) {
 		if o, err = p.Marshal(nil); chk.E(err) {
 			t.Fatal(err)
 		}
-		log.I.F("%d %s", len(o), o)
 		p2 := &P{}
 		var rem []byte
 		if rem, err = p2.Unmarshal(o); chk.E(err) {
@@ -32,7 +30,6 @@ func TestT_Marshal_Unmarshal(t *testing.T) {
 		if len(rem) > 0 {
 			log.I.F("%d %s", len(rem), rem)
 		}
-		log.I.S(p2.b)
 		if !bytes.Equal(pk, p2.b) {
 			t.Fatal("public key did not encode/decode faithfully")
 		}

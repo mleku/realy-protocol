@@ -15,7 +15,6 @@ func TestT_Marshal_Unmarshal(t *testing.T) {
 	if tb, err = t1.Marshal(nil); chk.E(err) {
 		t.Fatal(err)
 	}
-	log.I.S(tb)
 	t2 := new(T)
 	var rem []byte
 	if rem, err = t2.Unmarshal(tb); chk.E(err) {
@@ -25,5 +24,4 @@ func TestT_Marshal_Unmarshal(t *testing.T) {
 		log.I.F("%s", rem)
 		t.Fatal("remainder after tag should have been nothing")
 	}
-	log.I.S(t2)
 }
