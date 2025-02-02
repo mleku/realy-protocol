@@ -38,9 +38,15 @@ To enable this, a suffix is added to messages with the following format:
 
 `<message payload>\n` // all messages must be terminated with a newline
 
-`<request URL>\n` // because we aren't signing also on the http header
+`<request URL>\n`
 
-`<unix timestamp in decimal ascii>:<public key of signer>:<signature>\n`
+`<unix timestamp in decimal ascii>\n`
+
+`<public key of signer>\n`
+
+`<signature>\n`
+
+For simplicity, the signature is on a separate line, just as it is in the event format, this avoids needing to have a separate codec, and for the same reason the timestamp and public key.
 
 For reasons of security, a relay should not allow a time skew in the timestamp of more than 15 seconds.
 

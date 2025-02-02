@@ -6,6 +6,8 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/color v1.18.0
 	go.uber.org/atomic v1.11.0
+	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c
+	lukechampine.com/frand v1.5.1
 )
 
 require (

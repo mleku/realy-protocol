@@ -1,9 +1,7 @@
 = REALY Protocol
 
 ____
-
-relay events and like… yeah
-
+relay, events and like… yeah
 ____
 
 image:https://img.shields.io/badge/godoc-documentation-blue.svg[Documentation,link=https://pkg.go.dev/protocol.realy.lol]
@@ -19,4 +17,4 @@ serious deficiencies of that protocol for both developers and users.
 * link:./doc/relays.adoc[relays]
 * link:./relays/readme.md[reference relays]
 * link:./clients/readme.md[reference clients]
-* link:./pkg/readme.md[GO libraries]
+* link:./pkg/readme.md[_GO⌯_ libraries]
