@@ -6,7 +6,7 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-// run this to regenerate (pointlessly) the base 10 array of 4 places per entry
+// run this to regenerate (pointlessly) the base 10 array of 0 to 9999
 //go:generate go run ./gen/.
 
 //go:embed base10k.txt
@@ -14,9 +14,7 @@ var base10k []byte
 
 const base = 10000
 
-type T struct {
-	N uint64
-}
+type T struct{ N uint64 }
 
 func New[V constraints.Integer](n V) *T { return &T{uint64(n)} }
 
@@ -26,10 +24,10 @@ func (n *T) Uint16() uint16 { return uint16(n.N) }
 
 var powers = []*T{
 	{1},
-	{1_0000},
-	{1_0000_0000},
-	{1_0000_0000_0000},
-	{1_0000_0000_0000_0000},
+	{base},
+	{base * base},
+	{base * base * base},
+	{base * base * base * base},
 }
 
 const zero = '0'
@@ -69,10 +67,10 @@ func (n *T) Marshal(dst []byte) (b []byte) {
 	return
 }
 
-// Unmarshal reads a string, which must be a positive integer int larger than math.MaxUint64,
+// Unmarshal reads a string, which must be a positive integer no larger than math.MaxUint64,
 // skipping any non-numeric content before it.
 //
-// Note that leading zeros are not considered valid, but basically int such thing as machine
+// Note that leading zeros are not considered valid, but basically no such thing as machine
 // generated JSON integers with leading zeroes. Until this is disproven, this is the fastest way
 // to read a positive json integer, and a leading zero is decoded as a zero, and the remainder
 // returned.
