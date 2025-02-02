@@ -8,35 +8,73 @@ It is one of the guiding principles of the Unix philosophy to keep data in plain
 
 REALY protocol format is extremely simple and should be trivial to parse in any programming language with basic string slicing operators.
 
+---
+
+== Base64 Encoding
+
+To save space and eliminate the need for ugly `=` padding characters, we invoke  link:https://datatracker.ietf.org/doc/html/rfc4648#section-3.2[RFC 4648 section 3.2] for the case of using base64 URL encoding without padding because we know the data length. In this case, it is used for IDs and pubkeys (32 bytes payload each, 43 characters base64 raw URL encoded) and signatures (64 bytes payload, 86 characters base64 raw URL encoded) - the further benefit here is the exact same string can be used in HTTP GET parameters `?key=value&...` context. The standard `=` padding would break this usage as well.
+
+For ease of human usage, also, it is recommended when the value is printed in plain text that it be on its own line so triple click catches all of it including the normally word-wise separated `-` hyphen/minus character, as follows:
+
+    CF4I5dXYPZ_lu2pYRjey1QMDmgNJEyT-MM8Vvj6EnZM
+
+For those who can't find a "raw" codec for base64, the 32 byte length has 1`=` pad suffix and the 64 byte length has 2: `==` and this can be trimmed off and added back to conform to this requirement. Due to the fact that potentially there can be hundreds if not thousands of these in event content and tag fields the benefit can be quite great, as well as the benefit of being able to use these codes also in URL parameter values.
+
+== Sockets and HTTP
+
+Only subscriptions require server push messaging pattern, thus all other queries in REALY can be done with simple HTTP POST requests.
+
+A relay should respond to a `subscribe` request by upgrading from http to a websocket.
+
+It is unnecessary messages and work to use websockets for queries that match the HTTP request/response pattern, and by only requiring sockets for APIs that actually need server initiated messaging, the complexity of the relay is greatly reduced.
+
 == Events
 
-So, this is how realy events look:
+The format of events is as follows - the monospace segments are the exact text, including the necessary linebreak characters, the rest is descriptive.
 
-----
-<type name>\n // can be anything, hierarchic names like note/html note/md are possible
-<pubkey>\n // encoded in URL-base64
-<unix second precision timestamp in decimal ascii>\n
-key:value;extra;...\n // zero or more line separated, fields cannot contain a semicolon, end with newline instead of semicolon, key lowercase alphanumeric, first alpha, no whitespace or symbols, only key is mandatory, only reserved is `content`
-content:\n // literally this word on one line *directly* after the newline of the previous
-<content>\n // any number of further line breaks, last line is signature, everything before signature line is part of the canonical hash
-<ed25519 signature encoded in URL-base64>\n
-----
+---
 
-The canonical form is exactly this, except for the signature and following linebreak, hashed with Blake2b.
+`<type name>\n` // can be anything, hierarchic names like note/html note/md are possible
 
-The binary data - Event Ids, Pubkeys and Signatures are encoded in raw base64 URL encoding (without padding), Signatures are 86 characters, Ids and Pubkeys are 43 characters long.
+`<pubkey>\n` // encoded in URL-base64 with the padding `=` elided
 
-The database stored form of this event should make use of an event ID hash to monotonic collision free serial table and an event table.
+`<unix second precision timestamp in decimal ascii>\n`
+
+`tags:\n`
+
+`key:value;extra;...\n` // zero or more line separated, fields cannot contain a semicolon, end with newline instead of semicolon, key lowercase alphanumeric, first alpha, no whitespace or symbols, only key and following `:` are mandatory
+
+`\n` // tags end with a double linebreak
+
+`content:\n` // literally this word on one line *directly* after the newline of the previous
+
+`<content>\n` // any number of further line breaks, last line is signature, everything before signature line is part of the canonical hash
+
+-> The canonical form is the above, creating the message hash that is generated with Blake 2b <-
+
+---
+
+`<ed25519 signature encoded in URL-base64>\n` // this field would have two padding chars `==`, these should be elided
+
+---
+
+The binary data - Event Ids, Pubkeys and Signatures are encoded in raw base64 URL encoding (without padding), Signatures are 86 characters long, with the two padding characters elided `==`, Ids and Pubkeys are 43 characters long, with a single padding character elided `=`.
+
+The database stored form of this event should make use of an event ID hash to monotonic serial ID number as the key to associating the filter indexes of an event store.
 
 Event ID hashes will be encoded in URL-base64 where used in tags or mentioned in content with the prefix `e:`. Public keys must be prefixed with `p:` Tag keys should be intelligible words and a specification for their structure should be defined by users of them and shared with other REALY devs.
 
-Indexing tags should be done with a truncated Blake2b hash cut at 8 bytes in the event store.
+Indexing tag keys should be done with a truncated Blake2b hash cut at 8 bytes in the event store, keys should be short and thus the chances of collisions are practically zero.
+
+== Publishing
 
 Submitting an event to be stored is the same as a result sent from an Event Id query except with the type of operation inteded: `store\n` to store an event, `replace:<Event Id>\n` to replace an existing event and `relay\n` to not store but send to subscribers with open matching filters. Replace will not be accepted if the message type and pubkey are different to the original that is specified.
 
+The use of specific different types of store requests eliminates the complexity of defining event types as replaceable, by making this intent explicit. A relay can also only allow one kind, such as a pure relay, which only accepts `relay` requests but neither `store` nor `replace`.
+
 An event is then acknowledged to be stored or rejected with a message `ok:<true/false>;<Event Id>;<reason type>:human readable part` where the reason type is one of a set of common types to indicate the reason for the false
 
-Events that are returned have the `<subscription Id>:<Event Id>\n` as the first line.
+Events that are returned have the `<subscription Id>:<Event Id>\n` as the first line, and then the event in the format described above afterwards.
 
 == Queries
 
@@ -73,9 +111,11 @@ Event requests are as follows:
 
 ----
 events:<subscription Id>\n
-<one>\n
+<event ID one>\n
 ...
 ----
+
+Unlike in event tags and content, the `e:` prefix is unnecessary. The previous two query types only have lists of events in return, and to fetch the event a client then must send an `events` request.
 
 Normally clients will gather a potentially longer list of events and then send Event Id queries in segments according to the requirements of the user interface.
 
@@ -83,5 +123,6 @@ The results are returned as a series as follows, for each item returned:
 
 ----
 event:<subscription Id>:<Event Id>\n
-<event>
+<event>\n
+...
 ----
