@@ -105,6 +105,8 @@ Once all stored events are returned, the relay will send `end:<subscription Id>\
 
 `subscribe_full:<subscription Id>` should be used to request the events be directly delivered instead of just the event IDs associated with the subscription filter.
 
+In the case of events that are published via the `relay` command, it is necessary that therefore there must be one or more "chanserv" style relays also connected to the relay to whom the clients know they can request such events, and a "nickserv" type specialized relay would need to exist also for creating access whitelists - by compiling singular edits to these lists and using a subscription mechanism to notify such clients of the need to update their ACL.
+
 === Text
 
 A text search is just `search:<subscription Id>:` followed by a series of space separated tokens if the event store has a full text index, terminated with a newline.
