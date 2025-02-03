@@ -2,6 +2,7 @@ package timestamp
 
 import (
 	_ "embed"
+	"time"
 
 	"golang.org/x/exp/constraints"
 )
@@ -18,6 +19,8 @@ type T struct{ N uint64 }
 
 func New[V constraints.Integer](n V) *T { return &T{uint64(n)} }
 
+func Now() *T { return New(time.Now().Unix()) }
+
 func (n *T) Uint64() uint64 { return n.N }
 func (n *T) Int64() int64   { return int64(n.N) }
 func (n *T) Uint16() uint16 { return uint16(n.N) }
@@ -33,7 +36,11 @@ var powers = []*T{
 const zero = '0'
 const nine = '9'
 
-func (n *T) Marshal(dst []byte) (b []byte) {
+func (n *T) Marshal(dst []byte) (b []byte, err error) {
+	if n == nil {
+		err = errorf.E("cannot marshal nil timestamp")
+		return
+	}
 	nn := n.N
 	b = dst
 	if n.N == 0 {

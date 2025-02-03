@@ -15,7 +15,9 @@ func TestMarshalUnmarshal(t *testing.T) {
 	var err error
 	for _ = range 10000000 {
 		n = New(uint64(frand.Intn(math.MaxInt64)))
-		b = n.Marshal(b)
+		if b, err = n.Marshal(b); chk.E(err) {
+			t.Fatal(err)
+		}
 		m := New(0)
 		if rem, err = m.Unmarshal(b); chk.E(err) {
 			t.Fatal(err)
@@ -42,7 +44,7 @@ func BenchmarkByteStringToInt64(bb *testing.B) {
 		bb.ReportAllocs()
 		for i = 0; i < bb.N; i++ {
 			n := testInts[i%10000]
-			b = n.Marshal(b)
+			b, _ = n.Marshal(b)
 			b = b[:0]
 		}
 	})
@@ -60,7 +62,7 @@ func BenchmarkByteStringToInt64(bb *testing.B) {
 		m := New(0)
 		for i = 0; i < bb.N; i++ {
 			n := testInts[i%10000]
-			b = m.Marshal(b)
+			b, _ = m.Marshal(b)
 			_, _ = n.Unmarshal(b)
 			b = b[:0]
 		}
