@@ -24,11 +24,14 @@ func (u *U) String() string   { return string(u.uu) }
 func (u *U) Bytes() []byte    { return u.uu }
 func (u *U) Equal(u2 *U) bool { return bytes.Equal(u.uu, u2.uu) }
 
+// Marshal a URL, use New to ensure it is valid beforehand. Appends a terminal
+// newline.
 func (u *U) Marshal(dst []byte) (result []byte, err error) {
 	result = append(append(dst, u.uu...), '\n')
 	return
 }
 
+// Unmarshal decodes a URL and validates it is a proper URL.
 func (u *U) Unmarshal(data []byte) (rem []byte, err error) {
 	rem = data
 	for i, v := range rem {
