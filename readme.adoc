@@ -26,11 +26,11 @@ REALY is being designed with the lessons learned from Nostr and the last 30 year
 
 The main purposes that REALY will target are:
 
-* synchronous instant messaging protocols with IRC style nickserv and chanserv permissions and persistence, built from the ground up to take advantage of the cryptographic identities created by BIP-340 signatures, with an intuitive threaded structure that allows users to peruse a larger discussion without the problem of threads of discussion breaking the top level structure
+* synchronous instant messaging protocols with IRC style nickserv and chanserv permissions and persistence, built from the ground up to take advantage of the cryptographic identities, with an intuitive threaded structure that allows users to peruse a larger discussion without the problem of threads of discussion breaking the top level structure
 * structured document repositories primarily for text media, as a basis for collaborative documentation and literature collections, and software source code (breaking out of the filesystem tree structure to permit much more flexible ways of organising code)
 * persistent threaded discussion forums for longer form messages than the typical single sentence/paragraph of instant messaging
 * simple cross-relay data query protocol that enables minimising the data cost of traffic to clients
-* push style notification systems that can be programmed by the users' clients to respond to any kind of event breadcast to a relay
+* push style notification systems that can be programmed by the users' clients to respond to any kind of event broadcast to a relay
 
 A key concept in the REALY architecture is that of relays being a heteregenous group of data repositories and relaying systems that are built specific to purpose, such as
 
@@ -53,7 +53,7 @@ It is one of the guiding principles of the Unix philosophy to keep data in plain
 
 REALY protocol format is extremely simple and should be trivial to parse in any programming language with basic string slicing operators.
 
----
+'''
 
 === Base64 Encoding
 
@@ -103,7 +103,7 @@ Even subscription messages should be signed the same way, to avoid needing a sec
 
 The format of events is as follows - the monospace segments are the exact text, including the necessary linebreak characters, the rest is descriptive.
 
----
+''''
 
 `<type name>\n` // can be anything, hierarchic names like note/html note/md are possible, or type.subtype or whatever
 
@@ -123,11 +123,11 @@ The format of events is as follows - the monospace segments are the exact text, 
 
 -> The canonical form is the above, creating the message hash that is generated with Blake 2b <-
 
----
+''''
 
 `<ed25519 signature encoded in URL-base64>\n` // this field would have two padding chars `==`, these should be elided
 
----
+'''
 
 The binary data - Event Ids, Pubkeys and Signatures are encoded in raw base64 URL encoding (without padding), Signatures are 86 characters long, with the two padding characters elided `==`, Ids and Pubkeys are 43 characters long, with a single padding character elided `=`.
 
@@ -139,7 +139,7 @@ Indexing tag keys should be done with a truncated Blake2b hash cut at 8 bytes in
 
 === Publishing
 
-Submitting an event to be stored is the same as a result sent from an Event Id query except with the type of operation inteded: `store\n` to store an event, `replace:<Event Id>\n` to replace an existing event and `relay\n` to not store but send to subscribers with open matching filters. Replace will not be accepted if the message type and pubkey are different to the original that is specified.
+Submitting an event to be stored is the same as a result sent from an Event Id query except with the type of operation intended: `store\n` to store an event, `replace:<Event Id>\n` to replace an existing event and `relay\n` to not store but send to subscribers with open matching filters. Replace will not be accepted if the message type and pubkey are different to the original that is specified.
 
 The use of specific different types of store requests eliminates the complexity of defining event types as replaceable, by making this intent explicit. A relay can also only allow one kind, such as a pure relay, which only accepts `relay` requests but neither `store` nor `replace`.
 
