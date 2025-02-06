@@ -10,9 +10,9 @@ zap mleku: ⚡️mleku@getalby.com
 Inspired by the event bus architecture of https://github.com/nostr-protocol[nostr] but redesigned to avoid the
 serious deficiencies of that protocol for both developers and users.
 
-* link:./relays/readme.md[reference relays]
-* link:./clients/readme.md[reference clients]
-* link:./pkg/readme.md[_GO⌯_ libraries]
+* link:./relays/readme.adoc[reference relays]
+* link:./clients/readme.adoc[reference clients]
+* link:./pkg/readme.adoc[_GO⌯_ libraries]
 
 == why REALY?
 
@@ -202,7 +202,7 @@ event:<subscription Id>:<Event Id>\n
 ...
 ----
 
-= relays
+== relays
 
 A key design principle employed in REALY is that of relay specialization.
 
@@ -218,8 +218,6 @@ Instead of making a relay a hybrid event store and router, in REALY a relay does
 By constraining the protocol interoperability compliance down to small simple sub-protocols the ability for clients to maintain currency with other clients and with relays is greatly simplified, without gatekeepers.
 
 In addition, it should be normalized that relays can include clients that query other specialist relays, especially for such things as caching events. Thus one relay can be queried for a filter index, and the list of Event Ids returned can then be fetched from another relay that specialises in storing events and returning them on request by lists of Event Ids, and still other relays could store media files and be able to convert them on demand.
-
-For this reason, instead of a single centralised mechanism, aside from the basic specifications as you can see in link:./events_queries.adoc[REALY protocol event/query specification] it is possible to add more to this list without needing to negotiate to have this specification added to this repository, though once it comes into use it can be done.
 
 Along with the use of human-readable type identifiers for documents and the almost completely human-composable event encoding, the specification of REALY is not dependent on any kind of authoritative gatekeeping organisation, but instead organisations can add these to their own specifications lists as they see fit, eliminating a key problem with the operation of the nostr protocol.
 
