@@ -1,5 +1,4 @@
 = REALY protocol event/query specification
-
 :toc:
 
 == Introduction
