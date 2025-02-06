@@ -1,5 +1,9 @@
 = REALY protocol event/query specification
 
+:toc:
+
+== Introduction
+
 JSON is awful, and space inefficient, and complex to parse due to its intolerance of terminal commas and annoying to work with because of its retarded, multi-standards of string escaping.
 
 Line structured documents are much more readily amenable to human reading and editing, and `\n`/`;`/`:` is more efficient than `","` as an item separator. Data structures can be much more simply expressed in a similar way as how they are in programming languages.
