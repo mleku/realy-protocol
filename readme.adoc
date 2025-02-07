@@ -14,7 +14,7 @@ serious deficiencies of that protocol for both developers and users.
 * link:./clients/readme.adoc[reference clients]
 * link:./pkg/readme.adoc[_GO⌯_ libraries]
 
-== why REALY?
+=== why REALY?
 
 Since the introduction of the idea of a general "public square" style social network as seen with Facebook and Twitter, the whole world has been overcome by something of a plague of mind control brainwashing cults.
 
