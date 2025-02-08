@@ -7,8 +7,7 @@ zap mleku: ⚡️mleku@getalby.com
 
 == about
 
-Inspired by the event bus architecture of https://github.com/nostr-protocol[nostr] but redesigned to avoid the
-serious deficiencies of that protocol for both developers and users.
+Inspired by the event bus architecture of https://github.com/nostr-protocol[nostr] but redesigned to avoid the serious deficiencies of that protocol for both developers and users.
 
 * link:./relays/readme.adoc[reference relays]
 * link:./clients/readme.adoc[reference clients]
@@ -53,13 +52,19 @@ Following are several important specifications and rationales for the way the me
 
 === Simple Plaintext Message Codec
 
-Features are the equivalent of volume in construction and building architecture. They have an exponential time cost. Most API wire codecs make assumptions about data structures that do not hold for all applications, and it is simpler to make one that fits. Protobuf, for example, does not have any constraints for lengths of binary digits. This can be quite a problem for cryptographic data protocols, which then need to write extra validation code in addition to integrating the generated API message codec.
+Features are the equivalent of volume in construction and building architecture.
+They have an exponential time cost.
+Most API wire codecs make assumptions about data structures that do not hold for all applications, and it is simpler to make one that fits.
+Protobuf, for example, does not have any constraints for lengths of binary digits.
+This can be quite a problem for cryptographic data protocols, which then need to write extra validation code in addition to integrating the generated API message codec.
 
 The existing `nostr` protocol uses JSON, which is awful, and space inefficient, and complex to parse due to its intolerance of terminal commas and annoying to work with because of its retarded, multi-standards of string escaping.
 
-Thus instead of giving options for no reason, to developers, we are going to dictate that a plain text based protocol be used, in place of any other option. The performance difference is very minimal and a well designed plaintext message encoding is nearly as efficient as binary, and anyway, decent GZIP compression can also be applied to messages, flattening especially textual content.
+Thus instead of giving options for no reason, to developers, we are going to dictate that a plain text based protocol be used, in place of any other option.
+The performance difference is very minimal and a well designed plaintext message encoding is nearly as efficient as binary, and anyway, decent GZIP compression can also be applied to messages, flattening especially textual content.
 
-Line structured documents are much more readily amenable to human reading and editing, and `\n`/`;`/`:` is more efficient than `","` as an item separator. Data structures can be much more simply expressed in a similar way as how they are in programming languages.
+Line structured documents are much more readily amenable to human reading and editing, and `\n`/`;`/`:` is more efficient than `","` as an item separator.
+Data structures can be much more simply expressed in a similar way as how they are in programming languages.
 
 It is one of the guiding principles of the Unix philosophy to keep data in plain text, human readable format wherever possible, forcing the interposition of a parser just for humans to read the data adds extra brittleness to a protocol.
 
@@ -67,19 +72,23 @@ REALY protocol format is extremely simple and should be trivial to parse in any 
 
 === Unpadded Base64 Encoding for Fixed Length Binary Fields
 
-To save space and eliminate the need for ugly `=` padding characters, we invoke  link:https://datatracker.ietf.org/doc/html/rfc4648#section-3.2[RFC 4648 section 3.2] for the case of using base64 URL encoding without padding because we know the data length. In this case, it is used for IDs and pubkeys (32 bytes payload each, 43 characters base64 raw URL encoded) and signatures (64 bytes payload, 86 characters base64 raw URL encoded) - the further benefit here is the exact same string can be used in HTTP GET parameters `?key=value&...` context. The standard `=` padding would break this usage as well.
+To save space and eliminate the need for ugly `=` padding characters, we invoke  link:https://datatracker.ietf.org/doc/html/rfc4648#section-3.2[RFC 4648 section 3.2] for the case of using base64 URL encoding without padding because we know the data length.
+In this case, it is used for IDs and pubkeys (32 bytes payload each, 43 characters base64 raw URL encoded) and signatures (64 bytes payload, 86 characters base64 raw URL encoded) - the further benefit here is the exact same string can be used in HTTP GET parameters `?key=value&...` context.
+The standard `=` padding would break this usage as well.
 
 For ease of human usage, also, it is recommended when the value is printed in plain text that it be on its own line so triple click catches all of it including the normally word-wise separated `-` hyphen/minus character, as follows:
 
     CF4I5dXYPZ_lu2pYRjey1QMDmgNJEyT-MM8Vvj6EnZM
 
-For those who can't find a "raw" codec for base64, the 32 byte length has 1`=` pad suffix and the 64 byte length has 2: `==` and this can be trimmed off and added back to conform to this requirement. Due to the fact that potentially there can be hundreds if not thousands of these in event content and tag fields the benefit can be quite great, as well as the benefit of being able to use these codes also in URL parameter values.
+For those who can't find a "raw" codec for base64, the 32 byte length has 1`=` pad suffix and the 64 byte length has 2: `==` and this can be trimmed off and added back to conform to this requirement.
+Due to the fact that potentially there can be hundreds if not thousands of these in event content and tag fields the benefit can be quite great, as well as the benefit of being able to use these codes also in URL parameter values.
 
 === HTTP for Request/Response, Websockets for Push and Subscriptions
 
 Only subscriptions require server push messaging pattern, thus all other queries in REALY can be done with simple HTTP POST requests.
 
-A relay should respond to a `subscribe` request by upgrading from http to a websocket. The client should send this in the header also.
+A relay should respond to a `subscribe` request by upgrading from http to a websocket.
+The client should send this in the header also.
 
 It is unnecessary messages and work to use websockets for queries that match the HTTP request/response pattern, and by only requiring sockets for APIs that actually need server initiated messaging, the complexity of the relay is greatly reduced.
 
@@ -87,11 +96,48 @@ There can be a separate subscription type also, where there is delivering the ID
 
 HTTP with upgrades to websockets, and in the future HTTP/3 (QUIC) will be possible, have a big advantage of being generic, having a built in protocol for metadata, and are universally supported.
 
-Socket protocols have a higher overhead in processing, memory and bandwidth compared to simple request/response messages so it is more efficient to be able to support both models, as many times there is one or two subscriptions that might be opened, these can live on one socket per client, but the other requests are momentary so they have no state management cost. If the message type is this type, it makes no sense to do it over transports with a higher cost per byte and per user. A subscription is longer lasting, so it is ok that it takes a little longer to negotiate.
+Socket protocols have a higher overhead in processing, memory and bandwidth compared to simple request/response messages so it is more efficient to be able to support both models, as many times there is one or two subscriptions that might be opened, these can live on one socket per client, but the other requests are momentary so they have no state management cost.
+If the message type is this type, it makes no sense to do it over transports with a higher cost per byte and per user.
+A subscription is longer lasting, so it is ok that it takes a little longer to negotiate.
 
-=== Authentication and Integrity
+== Relays
 
-All queries and submissions must be authenticated in order to enable a REALY relay to allow access. The signing key does not have to be identifying, but it serves as a HMAC for the messages, as implementations can in fact expose parts of the path to plaintext and at least same-process possible interception.
+=== Architecture
+
+A key design principle employed in REALY is that of relay specialization.
+
+Instead of making a relay a hybrid event store and router, in REALY a relay does only one thing.
+Thus there can be
+
+- a simple event repository that only understands queries to fetch a list of events by ID,
+- a relay that only indexes and keeps a space/time limited cache of events to process filters
+- a relay that only keeps a full text search index and a query results cache
+- a relay that only accepts list change CRDT events such as follow, join/create/delete/leave group, block, delete, report and compiles these events into single lists that are accessible to another relay that can use these compiled lists to control access either via explicit lists or by matching filters
+- a relay that stores and fetches media, including being able to convert and cache such as image size and formats
+- ...and many others are possible
+
+By constraining the protocol interoperability compliance down to small simple sub-protocols the ability for clients to maintain currency with other clients and with relays is greatly simplified, without gatekeepers.
+
+=== The Continuum between Client and Server
+
+It should be normalized that relays can include clients that query other specialist relays, especially for such things as caching results fetched from other relays.
+
+Thus one relay can be queried for a filter index, and the list of Event Ids returned can then be fetched from another relay that specialises in storing events and returning them on request by lists of Event Ids, and still other relays could store media files and be able to convert them on demand.
+
+=== Replication Replaces Arbitration
+
+Along with the use of human-readable type identifiers for documents and the almost completely human-composable event encoding, the specification of REALY is not dependent on any kind of authoritative gatekeeping organisation, but instead organisations can add these to their own specifications lists as they see fit, eliminating a key problem with the operation of the nostr protocol.
+
+There need not be bureaucratic RFC style specifications, but instead use human-readable names and be less formally described, the formality improving as others adopt it and expand or refine it.
+
+=== Keeping Specifications With Implementations
+
+Thus also it is recommended that implementations of any or all REALY servers and clients should keep a copy of the specification documents found in other implementations and converge them to each other as required when their repositories update support to changes and new sub-protocols.
+
+== Authentication and Integrity
+
+All queries and submissions must be authenticated in order to enable a REALY relay to allow access.
+The signing key does not have to be identifying, but it serves as a HMAC for the messages, as implementations can in fact expose parts of the path to plaintext and at least same-process possible interception.
 
 Thus access control becomes simple, and privacy also equally simple if the relay is public access to read, the client should default to one-shot keys for each request.
 
@@ -116,13 +162,15 @@ The signature is upon the Blake 2b message hash of everything up to the semicolo
 
 Even subscription messages should be signed the same way, to avoid needing a secondary protocol. "open" relays that have no access control (which is retarded, but just to be complete) must still require this authentication message, but simply the client can use one-shot keys to sign with, as it also serves as a HMAC to validate the consistency of the request data, since it is based on the hash.
 
-=== Capability Messages
+== Capability Messages
 
-Capabilities are an important concept for an open, extensible network protocol. It is also very important to narrow down the surface of each API in the protocol in order to make it more efficient to deploy.
+Capabilities are an important concept for an open, extensible network protocol.
+It is also very important to narrow down the surface of each API in the protocol in order to make it more efficient to deploy.
 
 One of the biggest mistakes in the design of `nostr` is precisely in the blurring of APIs and even message types together with ambiguous elements to their structure.
 
-The `COUNT` and `AUTH` protocol method types have this property. Their structure is defined by an implicit data point - the sender of the message, which means parsing the message isn't just identifying it but also reading context.
+The `COUNT` and `AUTH` protocol method types have this property.
+Their structure is defined by an implicit data point - the sender of the message, which means parsing the message isn't just identifying it but also reading context.
 
 .Capability Request
 [Options="header"]
@@ -137,9 +185,13 @@ The `COUNT` and `AUTH` protocol method types have this property. Their structure
 | Message | Description
 | `capabilities\n` |
 | `tags:\`| use the same syntax as in events
-| `<protocol name>:vX.X.X[;<URL of protocol spec>]\n` | protocol name and version, the protocol spec URL is optional but recommended if available. Incompatibility is still possible with the first two fields matching (or the major version being the same, or minor, for more certainty, patch version number can be important as well, depending on who is working on it)
+| `<protocol name>:vX.X.X;<URL of protocol spec>;<flag,...>\n` | Protocol name and version, the protocol spec URL.
 
-- could include subfields eg: `nostr/json` might represent link:https://github.com/nostr-protocol/nips[NIP] protocol
+_The protocol name must be identical to the message header used in the protocol._
+
+The version number should be a tag on the commit at the URL that matches the version specified.
+
+`flag,...` for relevant flags on the protocol, for example `auth-required`, so for a `filter` this means "authenticate to read".
 | `\n` |
 |====
 
@@ -147,11 +199,11 @@ Protocol names should be defined in the same sense as a set of API calls - the d
 
 The protocol name is a shortcut and convenience, but should make automatic decisions by clients regarding a capability set simple.
 
-== Protocol Message Codec
+As per implementation, each capability should be part of a registered list of message types that will match the message sentinel that is also the protocol name, using a registry of available functions.
 
-=== Events
+== Events
 
-The format of events is as follows:
+=== Message Format
 
 .Event Encoding
 [options="header,footer"]
@@ -175,113 +227,142 @@ The encoding is already suitable for encoding to a database, it is optional to u
 
 === Tags
 
-Event ID hashes will be encoded in URL-base64 where used in tags or mentioned in content with the prefix `e:`. Public keys must be prefixed with `p:` Tag keys should be intelligible words and a specification for their structure should be defined by users of them and shared with other REALY devs.
+Event ID hashes will be encoded in URL-base64 where used in tags or mentioned in content with the prefix `e:`.
+Public keys must be prefixed with `p:` Tag keys should be intelligible words and a specification for their structure should be defined by users of them and shared with other REALY devs.
 
-NOTE: Indexing tag keys should be done with a truncated Blake2b hash cut at 8 bytes in the event store, keys should be short and thus the chances of collisions are practically zero. Blake2b is required so it is a good choice to use.
+NOTE: Indexing tag keys should be done with a truncated Blake2b hash cut at 8 bytes in the event store, keys should be short and thus the chances of collisions are practically zero.
+Blake2b is required so it is a good choice to use.
 
-==== Filter
+== Protocols
 
-A filter has one or more of the fields listed below, and headed with `filter`:
+Every REALY protocol should be simple and precise, and use HTTP for request/response pattern and only use websocket upgrades for publish/subscribe pattern.
 
-.Filter Encoding
-[options="header"]
-|====
-| Message | Description
-| `filter:<subscription Id>\n` | Subscription should be reasonably collision resistant, though it only applies to a single socket connection if part of a subscription
-| `pubkeys:<one>;<two>;...\n` | these match as OR
-| `timestamp:<since>;<until\n` | either can be empty but not both, omit line for this, both are inclusive
-| `tags:` |
-| `<key>:[<value>,...]\n | only the value should be part of the index
-| `...` | several matches can be present, they will act as OR
-| `\n` |
-|====
+The list of protocols below can be expanded to add new categories. The design should be as general as possible for each to isolate the application features from the relay processing cleanly.
 
-NOTE:
+=== `store`, `replace` and `relay` Requests
 
-The result returned from this is a newline separated list of event ID hashes encoded in base64, a following Event Id search is required to retrieve them. This obviates the need for pagination as the 45 bytes per event per result is far less than sending the whole event and the client is then free to paginate how they like without making for an onerous implementation requirement or nebulous result limit specification.
+ store\n
+ <event>
 
-The results must be in reverse chronological order so the client knows it can paginate them from newest to oldest as required by the user interface.
+ replace:<event id>\n
+ <event>
 
-If instead of `filter\n` at the top there is `subscribe:<subscription Id>\n` the relay should return any events it finds the Id for and then subsequently will forward the Event Id of any new matching event that comes in until the client sends a `close:<subscription Id>\n` message.
+ relay:\n
+ <event>
 
-Once all stored events are returned, the relay will send `end:<subscription Id>\n` to notify the client that here after will only be events that just arrived.
+Submitting an event to be stored is the same as a result sent from an Event Id query except with the type of operation intended: `store\n` to store an event, `replace:<Event Id>\n` to replace an existing event and `relay\n` to not store but send to subscribers with open matching filters.
 
-`subscribe_full:<subscription Id>` should be used to request the events be directly delivered instead of just the event IDs associated with the subscription filter.
+NOTE: Replace will not be accepted if the message type and pubkey are different to the original that is specified.
 
-In the case of events that are published via the `relay` command, it is necessary that therefore there must be one or more "chanserv" style relays also connected to the relay to whom the clients know they can request such events, and a "nickserv" type specialized relay would need to exist also for creating access whitelists - by compiling singular edits to these lists and using a subscription mechanism to notify such clients of the need to update their ACL.
-
-== Protocol Messages
-
-=== Publishing
-
-Submitting an event to be stored is the same as a result sent from an Event Id query except with the type of operation intended: `store\n` to store an event, `replace:<Event Id>\n` to replace an existing event and `relay\n` to not store but send to subscribers with open matching filters. Replace will not be accepted if the message type and pubkey are different to the original that is specified.
-
-The use of specific different types of store requests eliminates the complexity of defining event types as replaceable, by making this intent explicit. A relay can also only allow one kind, such as a pure relay, which only accepts `relay` requests but neither `store` nor `replace`.
+The use of specific different types of store requests eliminates the complexity of defining event types as replaceable, by making this intent explicit.
+A relay can also only allow one of these, such as a pure relay, which only accepts `relay` requests but neither `store` nor `replace`, or any combination of these.
+The available API calls should be listed in the `capability` response
 
 An event is then acknowledged to be stored or rejected with a message `ok:<true/false>;<Event Id>;<reason type>:human readable part` where the reason type is one of a set of common types to indicate the reason for the false
 
 Events that are returned have the `<subscription Id>:<Event Id>\n` as the first line, and then the event in the format described above afterwards.
 
-=== Queries
 
-There is three types of queries in REALY:
+There is four basic types of queries in REALY, derived from the `nostr` design, but refined and separated into distinct, small API calls.
 
+=== `events` Query
 
-==== Text
+A key concept in REALY protocol is minimising the footprint of each API call.
+Thus, a primary query type is the simple request for a list of events by their ID hash:
 
-A text search is just `search:<subscription Id>:` followed by a series of space separated tokens if the event store has a full text index, terminated with a newline.
+==== Request
 
-==== Event Id
+.events request
+[options="header"]
+|====
+| Message | Description
+|`events:\n` | message header
+|`<event ID one>\n` | one or more event ID to be returned in the response
+|====
 
-Event requests are as follows:
-
-----
-events:<subscription Id>\n
-<event ID one>\n
-...
-----
-
-Unlike in event tags and content, the `e:` prefix is unnecessary. The previous two query types only have lists of events in return, and to fetch the event a client then must send an `events` request.
+Unlike in event tags and content, the `e:` prefix is unnecessary.
+The previous two query types only have lists of events in return, and to fetch the event a client then must send an `events` request.
 
 Normally clients will gather a potentially longer list of events and then send Event Id queries in segments according to the requirements of the user interface.
 
 The results are returned as a series as follows, for each item returned:
 
-----
-event:<subscription Id>:<Event Id>\n
-<event>\n
-...
-----
+==== Response
 
-== Relays
+.events response
+[options="header"]
+|====
+| Message | Description
+|`event:<Event Id>\n`| each event is marked with his header, so `\nevent:` serves as a section marker
+|`<event>\n`| the full event text as described previously
+|====
 
-=== Architecture
+=== `filter` Query
 
-A key design principle employed in REALY is that of relay specialization.
+A filter has one or more of the fields listed below, and headed with `filter`:
 
-Instead of making a relay a hybrid event store and router, in REALY a relay does only one thing. Thus there can be
+==== Request
 
-- a simple event repository that only understands queries to fetch a list of events by ID,
-- a relay that only indexes and keeps a space/time limited cache of events to process filters
-- a relay that only keeps a full text search index and a query results cache
-- a relay that only accepts list change CRDT events such as follow, join/create/delete/leave group, block, delete, report and compiles these events into single lists that are accessible to another relay that can use these compiled lists to control access either via explicit lists or by matching filters
-- a relay that stores and fetches media, including being able to convert and cache such as image size and formats
-- ...and many others are possible
+.filter request
+[options="header"]
+|====
+| Message | Description
+|`filter:\n` | message type header
+|`types:<one>;<two>;...\n` | these should be the same as the ones that appear in events, and match on the prefix so subtypes, eg `note/text` and `note/html` will both match on `note`.
+|`pubkeys:<one>;<two>;...\n`  | list of pubkeys to only return results from
+|`timestamp:<since>;<until\n` | either can be empty but not both, omit line for this, both are inclusive
+|`tags:\n` | these end with a second newline
+|`<key>:<value>[;...]\n` | only the value can be searched for, and must be semicolon separated for multiple
+|`...` | several tags can be present, they will act as OR
+|`\n` | tags end with a second newline
+|====
 
-By constraining the protocol interoperability compliance down to small simple sub-protocols the ability for clients to maintain currency with other clients and with relays is greatly simplified, without gatekeepers.
+The response message is simply a list of the matching events IDs, which are expected to be in reverse chronological order:
 
-=== The Continuum between Client and Server
+==== Response
 
-It should be normalized that relays can include clients that query other specialist relays, especially for such things as caching events.
+.filter request
+[options="header"]
+|====
+| Message | Description
+|`response:filter\n` | message type header, all use `response:` for HTTP style request/response
+|`<event id>\n` | each event id is separated by a newline
+|`...` | ...any number of events further.
+|====
 
-Thus one relay can be queried for a filter index, and the list of Event Ids returned can then be fetched from another relay that specialises in storing events and returning them on request by lists of Event Ids, and still other relays could store media files and be able to convert them on demand.
+=== `subscribe` Query
 
-=== Replication Replaces Arbitration
+This is identical to `filter` as above but establishes a websocket connection to return the results, and each new result is sent in a single message over the websocket as it arrives from a `store` or `relay` message sent to the relay.
 
-Along with the use of human-readable type identifiers for documents and the almost completely human-composable event encoding, the specification of REALY is not dependent on any kind of authoritative gatekeeping organisation, but instead organisations can add these to their own specifications lists as they see fit, eliminating a key problem with the operation of the nostr protocol.
+A key distinction in this form is the `subscribe\n` can be followed by nothing, which will implicitly indicate to simply return all new event IDs that arrive from that moment forwards, in accordance with other constraints such as permission
 
-There need not be bureaucratic RFC style specifications, but instead use human-readable names and be less formally described, the formality improving as others adopt it and expand or refine it.
+IMPORTANT: Direct messages, for example, are privileged and can only be sent in response to a query or subscription signed with one of the keys appearing in the message (author or recipient/s)
 
-=== Keeping Specifications With Implementations
+An empty filter is not valid for a `filter`, a full event dump could instead be a separate API as this is an intensive operation that should be restricted to administrators.
+For this reason an empty `subscribe` is implicitly "from now".
 
-Thus also it is recommended that implementations of any or all REALY servers and clients should keep a copy of the specification documents found in other implementations and converge them to each other as required when their repositories update support to changes and new sub-protocols.
+The `subscribe` query streams back results containing just the event ID hash.
+The client can then send an `events` query to actually fetch the data.
+This enables collecting a list and indicating the count without consuming the bandwidth for it until the view is opened.
+
+=== `fulltext` Query
+
+A fulltext query is just `fulltext:` followed by a series of space separated tokens if the event store has a full text index, terminated with a newline.
+
+.fulltext request
+[options="header"]
+|====
+| Message | Description
+|`fulltext:text to do full text search with\n`| search terms are space separated, terminated by newline
+|====
+
+The response message is like as the `filter`, the actual fetching of events is a separate operation.
+
+.fulltext response
+[options="header"]
+|====
+| Message | Description
+|`response:fulltext\n`| each event is marked with his header, so `\nevent:` serves as a section marker
+|`<event id>\n`|  event id that matches the search terms
+|`...` | any number of events further, sorted by relevance.
+|====
