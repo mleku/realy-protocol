@@ -7,7 +7,7 @@ zap mleku: ⚡️mleku@getalby.com
 
 == about
 
-Inspired by the event bus architecture of https://github.com/nostr-protocol[nostr] but redesigned to avoid the serious deficiencies of that protocol for both developers and users.
+Inspired by the event bus architecture of link:https://github.com/nostr-protocol[nostr] but redesigned to avoid the serious deficiencies of that protocol for both developers and users.
 
 * link:./relays/readme.adoc[reference relays]
 * link:./clients/readme.adoc[reference clients]
@@ -102,7 +102,7 @@ A subscription is longer lasting, so it is ok that it takes a little longer to n
 
 == Relays
 
-=== Architecture
+=== Modular Architecture
 
 A key design principle employed in REALY is that of relay specialization.
 
@@ -124,17 +124,19 @@ It should be normalized that relays can include clients that query other special
 
 Thus one relay can be queried for a filter index, and the list of Event Ids returned can then be fetched from another relay that specialises in storing events and returning them on request by lists of Event Ids, and still other relays could store media files and be able to convert them on demand.
 
-=== Replication Replaces Arbitration
+=== Specifications
+
+==== Replication Instead of Arbitration
 
 Along with the use of human-readable type identifiers for documents and the almost completely human-composable event encoding, the specification of REALY is not dependent on any kind of authoritative gatekeeping organisation, but instead organisations can add these to their own specifications lists as they see fit, eliminating a key problem with the operation of the nostr protocol.
 
 There need not be bureaucratic RFC style specifications, but instead use human-readable names and be less formally described, the formality improving as others adopt it and expand or refine it.
 
-=== Keeping Specifications With Implementations
+==== Keeping Specifications With Implementations
 
 Thus also it is recommended that implementations of any or all REALY servers and clients should keep a copy of the specification documents found in other implementations and converge them to each other as required when their repositories update support to changes and new sub-protocols.
 
-== Authentication and Integrity
+== Client Message Authentication and Integrity
 
 All queries and submissions must be authenticated in order to enable a REALY relay to allow access.
 The signing key does not have to be identifying, but it serves as a HMAC for the messages, as implementations can in fact expose parts of the path to plaintext and at least same-process possible interception.
