@@ -35,7 +35,7 @@ The main purposes that REALY will target are:
 
 === Architectural Philosophy
 
-A key concept in the REALY architecture is that of relays being a heteregenous group of data repositories and relaying systems that are built specific to purpose, such as
+A key concept in the REALY architecture is that of relays being a heterogeneous group of data repositories and relaying systems that are built specific to purpose, such as
 
 - a chat relay, which does not store any messages but merely bounces messages around ot subscribers,
 - a document repository, which provides read access to data with full text search capability, that can ne specialised for a singular data format (eg markdown, eg mediawiki, eg code), a threaded, moderated forum, and others,
@@ -109,7 +109,7 @@ A key design principle employed in REALY is that of relay specialization.
 Instead of making a relay a hybrid event store and router, in REALY a relay does only one thing.
 Thus there can be
 
-- a simple event repository that only understands queries to fetch a list of events by ID,
+- a simple event repository that only understands queries to fetch a list of events by ID
 - a relay that only indexes and keeps a space/time limited cache of events to process filters
 - a relay that only keeps a full text search index and a query results cache
 - a relay that only accepts list change CRDT events such as follow, join/create/delete/leave group, block, delete, report and compiles these events into single lists that are accessible to another relay that can use these compiled lists to control access either via explicit lists or by matching filters
