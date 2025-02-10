@@ -21,8 +21,16 @@ func New(sig []byte) (p *S, err error) {
 	return
 }
 
-func (p *S) Marshal(dst []byte) (result []byte, err error) {
-	result = dst
+func Sign(msg []byte, sec ed25519.PrivateKey) (sig []byte, err error) {
+	return sec.Sign(nil, msg, nil)
+}
+
+func Verify(msg []byte, pub ed25519.PublicKey, sig []byte) (ok bool) {
+	return ed25519.Verify(pub, msg, sig)
+}
+
+func (p *S) Marshal(d []byte) (r []byte, err error) {
+	r = d
 	if p == nil || p.Signature == nil || len(p.Signature) == 0 {
 		err = errorf.E("nil/zero length signature")
 		return
@@ -32,7 +40,7 @@ func (p *S) Marshal(dst []byte) (result []byte, err error) {
 			len(p.Signature), ed25519.SignatureSize, p.Signature)
 		return
 	}
-	buf := bytes.NewBuffer(result)
+	buf := bytes.NewBuffer(r)
 	w := base64.NewEncoder(base64.RawURLEncoding, buf)
 	if _, err = w.Write(p.Signature); chk.E(err) {
 		return
@@ -40,32 +48,32 @@ func (p *S) Marshal(dst []byte) (result []byte, err error) {
 	if err = w.Close(); chk.E(err) {
 		return
 	}
-	result = append(buf.Bytes(), '\n')
+	r = append(buf.Bytes(), '\n')
 	return
 }
 
-func (p *S) Unmarshal(data []byte) (rem []byte, err error) {
-	rem = data
+func (p *S) Unmarshal(d []byte) (r []byte, err error) {
+	r = d
 	if p == nil {
 		err = errorf.E("can't unmarshal into nil types.T")
 		return
 	}
-	if len(rem) < 2 {
+	if len(r) < 2 {
 		err = errorf.E("can't unmarshal nothing")
 		return
 	}
-	for i := range rem {
-		if rem[i] == '\n' {
+	for i := range r {
+		if r[i] == '\n' {
 			if i != Len {
 				err = errorf.E("invalid encoded signature length %d; require %d '%0x'",
-					i, Len, rem[:i])
+					i, Len, r[:i])
 				return
 			}
 			p.Signature = make([]byte, ed25519.SignatureSize)
-			if _, err = base64.RawURLEncoding.Decode(p.Signature, rem[:i]); chk.E(err) {
+			if _, err = base64.RawURLEncoding.Decode(p.Signature, r[:i]); chk.E(err) {
 				return
 			}
-			rem = rem[i+1:]
+			r = r[i+1:]
 			return
 		}
 	}

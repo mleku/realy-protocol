@@ -21,8 +21,8 @@ func New(pk []byte) (p *P, err error) {
 	return
 }
 
-func (p *P) Marshal(dst []byte) (result []byte, err error) {
-	result = dst
+func (p *P) Marshal(d []byte) (r []byte, err error) {
+	r = d
 	if p == nil || p.PublicKey == nil || len(p.PublicKey) == 0 {
 		err = errorf.E("nil/zero length pubkey")
 		return
@@ -32,7 +32,7 @@ func (p *P) Marshal(dst []byte) (result []byte, err error) {
 			len(p.PublicKey), ed25519.PublicKeySize, p.PublicKey)
 		return
 	}
-	buf := bytes.NewBuffer(result)
+	buf := bytes.NewBuffer(r)
 	w := base64.NewEncoder(base64.RawURLEncoding, buf)
 	if _, err = w.Write(p.PublicKey); chk.E(err) {
 		return
@@ -40,32 +40,32 @@ func (p *P) Marshal(dst []byte) (result []byte, err error) {
 	if err = w.Close(); chk.E(err) {
 		return
 	}
-	result = append(buf.Bytes(), '\n')
+	r = append(buf.Bytes(), '\n')
 	return
 }
 
-func (p *P) Unmarshal(data []byte) (rem []byte, err error) {
-	rem = data
+func (p *P) Unmarshal(d []byte) (r []byte, err error) {
+	r = d
 	if p == nil {
 		err = errorf.E("can't unmarshal into nil types.T")
 		return
 	}
-	if len(rem) < 2 {
+	if len(r) < 2 {
 		err = errorf.E("can't unmarshal nothing")
 		return
 	}
-	for i := range rem {
-		if rem[i] == '\n' {
+	for i := range r {
+		if r[i] == '\n' {
 			if i != Len {
 				err = errorf.E("invalid encoded pubkey length %d; require %d '%0x'",
-					i, Len, rem[:i])
+					i, Len, r[:i])
 				return
 			}
 			p.PublicKey = make([]byte, ed25519.PublicKeySize)
-			if _, err = base64.RawURLEncoding.Decode(p.PublicKey, rem[:i]); chk.E(err) {
+			if _, err = base64.RawURLEncoding.Decode(p.PublicKey, r[:i]); chk.E(err) {
 				return
 			}
-			rem = rem[i+1:]
+			r = r[i+1:]
 			return
 		}
 	}

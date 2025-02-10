@@ -77,32 +77,32 @@ func ValidateField[V ~[]byte | ~string](f V, i int) (k []byte, err error) {
 	return
 }
 
-func (t *T) Marshal(dst []byte) (result []byte, err error) {
-	result = dst
+func (t *T) Marshal(d []byte) (r []byte, err error) {
+	r = d
 	if len(t.fields) == 0 {
 		return
 	}
 	for i, field := range t.fields {
-		result = append(result, field...)
+		r = append(r, field...)
 		if i == 0 {
-			result = append(result, ':')
+			r = append(r, ':')
 		} else if i == len(t.fields)-1 {
-			result = append(result, '\n')
+			r = append(r, '\n')
 		} else {
-			result = append(result, ';')
+			r = append(r, ';')
 		}
 	}
 	return
 }
 
-func (t *T) Unmarshal(data []byte) (rem []byte, err error) {
+func (t *T) Unmarshal(d []byte) (r []byte, err error) {
 	var i int
 	var v byte
 	var dat []byte
 	// first find the end
-	for i, v = range data {
+	for i, v = range d {
 		if v == '\n' {
-			dat, rem = data[:i], data[i+1:]
+			dat, r = d[:i], d[i+1:]
 			break
 		}
 	}

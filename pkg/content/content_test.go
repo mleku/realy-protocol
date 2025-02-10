@@ -19,19 +19,17 @@ func TestC_Marshal_Unmarshal(t *testing.T) {
 	if res, err = c1.Marshal(nil); chk.E(err) {
 		t.Fatal(err)
 	}
-	// append a fake zero length signature
-	res = append(res, '\n')
 	c2 := new(C)
 	var rem []byte
 	if rem, err = c2.Unmarshal(res); chk.E(err) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(c1.Content, c2.Content) {
-		log.I.S(c1, c2)
+		log.I.S(c1.Content, c2.Content)
 		t.Fatal("content not equal")
 	}
-	if !bytes.Equal(rem, []byte{'\n'}) {
+	if len(rem) > 0 {
 		log.I.S(rem)
-		t.Fatalf("remainder not found")
+		t.Fatalf("unexpected remaining bytes: '%0x'", rem)
 	}
 }

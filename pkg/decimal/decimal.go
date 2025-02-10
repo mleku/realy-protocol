@@ -1,4 +1,4 @@
-package timestamp
+package decimal
 
 import (
 	_ "embed"
@@ -26,7 +26,7 @@ func (n *T) Int64() int64   { return int64(n.N) }
 func (n *T) Uint16() uint16 { return uint16(n.N) }
 
 var powers = []*T{
-	{1},
+	{base / base},
 	{base},
 	{base * base},
 	{base * base * base},
@@ -36,15 +36,15 @@ var powers = []*T{
 const zero = '0'
 const nine = '9'
 
-func (n *T) Marshal(dst []byte) (b []byte, err error) {
+func (n *T) Marshal(d []byte) (r []byte, err error) {
 	if n == nil {
 		err = errorf.E("cannot marshal nil timestamp")
 		return
 	}
 	nn := n.N
-	b = dst
+	r = d
 	if n.N == 0 {
-		b = append(b, '0')
+		r = append(r, '0')
 		return
 	}
 	var i int
@@ -67,7 +67,7 @@ func (n *T) Marshal(dst []byte) (b []byte, err error) {
 				}
 			}
 		}
-		b = append(b, bb...)
+		r = append(r, bb...)
 		n.N = n.N - q*powers[k].N
 	}
 	n.N = nn
@@ -81,19 +81,19 @@ func (n *T) Marshal(dst []byte) (b []byte, err error) {
 // generated JSON integers with leading zeroes. Until this is disproven, this is the fastest way
 // to read a positive json integer, and a leading zero is decoded as a zero, and the remainder
 // returned.
-func (n *T) Unmarshal(b []byte) (r []byte, err error) {
-	if len(b) < 1 {
+func (n *T) Unmarshal(d []byte) (r []byte, err error) {
+	if len(d) < 1 {
 		err = errorf.E("zero length number")
 		return
 	}
 	var sLen int
-	if b[0] == zero {
-		r = b[1:]
+	if d[0] == zero {
+		r = d[1:]
 		n.N = 0
 		return
 	}
 	// count the digits
-	for ; sLen < len(b) && b[sLen] >= zero && b[sLen] <= nine && b[sLen] != ','; sLen++ {
+	for ; sLen < len(d) && d[sLen] >= zero && d[sLen] <= nine && d[sLen] != ','; sLen++ {
 	}
 	if sLen == 0 {
 		err = errorf.E("zero length number")
@@ -104,9 +104,9 @@ func (n *T) Unmarshal(b []byte) (r []byte, err error) {
 		return
 	}
 	// the length of the string found
-	r = b[sLen:]
-	b = b[:sLen]
-	for _, ch := range b {
+	r = d[sLen:]
+	d = d[:sLen]
+	for _, ch := range d {
 		ch -= zero
 		n.N = n.N*10 + uint64(ch)
 	}

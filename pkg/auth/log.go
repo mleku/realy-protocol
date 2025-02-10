@@ -1,4 +1,4 @@
-package timestamp
+package auth
 
 import (
 	"protocol.realy.lol/pkg/lol"

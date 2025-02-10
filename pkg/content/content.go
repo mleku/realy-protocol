@@ -2,53 +2,65 @@ package content
 
 import (
 	"bytes"
+	"io"
+
+	"protocol.realy.lol/pkg/decimal"
 )
 
-// C is raw content bytes of a message. This can contain anything but when it is
-// unmarshalled it is assumed that the last line (content between the second
-// last and last line break) is not part of the content, as this is where the
-// signature is placed.
-//
-// The only guaranteed property of an encoded content.C is that it has two
-// newline characters, one at the very end, and a second one before it that
-// demarcates the end of the actual content. It can be entirely binary and mess
-// up a terminal to render the unsanitized possible control characters.
+// C is raw content bytes of a message.
 type C struct{ Content []byte }
 
 // Marshal just writes the provided data with a `content:\n` prefix and adds a
 // terminal newline.
-func (c *C) Marshal(dst []byte) (result []byte, err error) {
-	result = append(append(append(dst, "content:\n"...), c.Content...), '\n')
+func (c *C) Marshal(d []byte) (r []byte, err error) {
+	r = append(d, "content:"...)
+	if r, err = decimal.New(len(c.Content)).Marshal(r); chk.E(err) {
+		return
+	}
+	r = append(r, '\n')
+	// log.I.S(r)
+	r = append(r, c.Content...)
+	r = append(r, '\n')
+	// log.I.S(r)
 	return
 }
 
-var Prefix = "content:\n"
+var Prefix = "content:"
 
-// Unmarshal expects the `content:\n` prefix and stops at the second last
+// Unmarshal expects the `content:<length>\n` prefix and stops at the second last
 // newline. The data between the second last and last newline in the data is
-// assumed to be a signature but it could be anything in another use case.
-func (c *C) Unmarshal(data []byte) (rem []byte, err error) {
-	if !bytes.HasPrefix(data, []byte("content:\n")) {
-		err = errorf.E("content prefix `content:\\n' not found: '%s'", data[:len(Prefix)+1])
+// assumed to be a signature, but it could be anything in another use case.
+//
+// It is necessary that any non-content elements after the content must be
+// parsed before returning to the content, because this is a
+func (c *C) Unmarshal(d []byte) (r []byte, err error) {
+	if !bytes.HasPrefix(d, []byte(Prefix)) {
+		err = errorf.E("content prefix `content:' not found: '%s'", d[:len(Prefix)])
 		return
 	}
 	// trim off the prefix.
-	data = data[len(Prefix):]
-	// check that there is a last newline.
-	if data[len(data)-1] != '\n' {
-		err = errorf.E("input data does not end with newline")
+	d = d[len(Prefix):]
+	l := decimal.New(0)
+	if d, err = l.Unmarshal(d); chk.E(err) {
 		return
 	}
-	// we start at the second last, previous to the terminal newline byte.
-	lastPos := len(data) - 2
-	for ; lastPos >= len(Prefix); lastPos-- {
-		// the content ends at the byte before the second last newline byte.
-		if data[lastPos] == '\n' {
-			break
-		}
+	// and then there must be a newline
+	if d[0] != '\n' {
+		err = errorf.E("must be newline after content:<length>:\n%n", d)
+		return
 	}
-	c.Content = data[:lastPos]
-	// return the remainder after the content-terminal newline byte.
-	rem = data[lastPos+1:]
+	d = d[1:]
+	// log.I.S(l.Uint64(), d)
+	if len(d) < int(l.N) {
+		err = io.EOF
+		return
+	}
+	c.Content = d[:l.N]
+	r = d[l.N:]
+	if r[0] != '\n' {
+		err = errorf.E("must be newline after content:<length>\\n, got '%s' %x", c.Content[len(c.Content)-1])
+		return
+	}
+	r = r[1:]
 	return
 }

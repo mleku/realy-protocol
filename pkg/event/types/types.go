@@ -8,38 +8,38 @@ import (
 // A T is a type descriptor, that is terminated by a newline.
 type T struct{ t []byte }
 
-func New[V ~[]byte | ~string](t V) T { return T{[]byte(t)} }
+func New[V ~[]byte | ~string](t V) *T { return &T{[]byte(t)} }
 
 func (t *T) Equal(t2 *T) bool { return bytes.Equal(t.t, t2.t) }
 
 // Marshal append the T to a slice and appends a terminal newline, and returns
 // the result.
-func (t *T) Marshal(dst []byte) (result []byte, err error) {
+func (t *T) Marshal(d []byte) (r []byte, err error) {
 	if t == nil {
 		return
 	}
-	result = append(append(dst, t.t...), '\n')
+	r = append(append(d, t.t...), '\n')
 	return
 }
 
 // Unmarshal expects an identifier followed by a newline. If the buffer ends
 // without a newline an EOF is returned.
-func (t *T) Unmarshal(data []byte) (rem []byte, err error) {
-	rem = data
+func (t *T) Unmarshal(d []byte) (r []byte, err error) {
+	r = d
 	if t == nil {
 		err = errorf.E("can't unmarshal into nil types.T")
 		return
 	}
-	if len(rem) < 2 {
+	if len(r) < 2 {
 		err = errorf.E("can't unmarshal nothing")
 		return
 	}
-	for i := range rem {
-		if rem[i] == '\n' {
+	for i := range r {
+		if r[i] == '\n' {
 			// write read data up to the newline and return the remainder after
 			// the newline.
-			t.t = rem[:i]
-			rem = rem[i+1:]
+			t.t = r[:i]
+			r = r[i+1:]
 			return
 		}
 	}

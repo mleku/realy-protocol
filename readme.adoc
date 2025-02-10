@@ -10,6 +10,7 @@ zap mleku: ⚡️mleku@getalby.com
 Inspired by the event bus architecture of link:https://github.com/nostr-protocol[nostr] but redesigned to avoid the serious deficiencies of that protocol for both developers and users.
 
 * link:./relays/readme.adoc[reference relays]
+* link:./repos/readme.adoc[reference repos]
 * link:./clients/readme.adoc[reference clients]
 * link:./pkg/readme.adoc[_GO⌯_ libraries]
 
@@ -241,12 +242,14 @@ Every REALY protocol should be simple and precise, and use HTTP for request/resp
 
 The list of protocols below can be expanded to add new categories. The design should be as general as possible for each to isolate the application features from the relay processing cleanly.
 
-=== `store`, `replace` and `relay` Requests
+=== Publication
+
+=== store, update and relay
 
  store\n
  <event>
 
- replace:<event id>\n
+ update:<event id>\n
  <event>
 
  relay:\n
@@ -267,12 +270,14 @@ Events that are returned have the `<subscription Id>:<Event Id>\n` as the first 
 
 There is four basic types of queries in REALY, derived from the `nostr` design, but refined and separated into distinct, small API calls.
 
-=== `events` Query
+=== Queries
+
+==== events
 
 A key concept in REALY protocol is minimising the footprint of each API call.
 Thus, a primary query type is the simple request for a list of events by their ID hash:
 
-==== Request
+===== Request
 
 .events request
 [options="header"]
@@ -289,7 +294,7 @@ Normally clients will gather a potentially longer list of events and then send E
 
 The results are returned as a series as follows, for each item returned:
 
-==== Response
+===== Response
 
 .events response
 [options="header"]
@@ -299,11 +304,11 @@ The results are returned as a series as follows, for each item returned:
 |`<event>\n`| the full event text as described previously
 |====
 
-=== `filter` Query
+==== filter
 
 A filter has one or more of the fields listed below, and headed with `filter`:
 
-==== Request
+===== Request
 
 .filter request
 [options="header"]
@@ -321,9 +326,9 @@ A filter has one or more of the fields listed below, and headed with `filter`:
 
 The response message is simply a list of the matching events IDs, which are expected to be in reverse chronological order:
 
-==== Response
+===== Response
 
-.filter request
+.filter response
 [options="header"]
 |====
 | Message | Description
@@ -332,22 +337,60 @@ The response message is simply a list of the matching events IDs, which are expe
 |`...` | ...any number of events further.
 |====
 
-=== `subscribe` Query
+==== subscribe
 
-This is identical to `filter` as above but establishes a websocket connection to return the results, and each new result is sent in a single message over the websocket as it arrives from a `store` or `relay` message sent to the relay.
+`subscribe` means to request to be sent events that match a filter, from the moment the request is received. Mixing queries and subscriptions is a bad idea because it makes it difficult to specify the expected behaviour from a relay, or client. Thus, a subset of the `filter` is used. The subscription ends when the client sends `unsubscribe` message.
 
-A key distinction in this form is the `subscribe\n` can be followed by nothing, which will implicitly indicate to simply return all new event IDs that arrive from that moment forwards, in accordance with other constraints such as permission
+.subscribe request
+[options="header"]
+|====
+| Message | Description
+|`subscribe:<subscription id>\n` | the ID is for the use of the client to distinguish between multiple subscriptions on one socket, there can be more than one.
+|`types:<one>;<two>;...\n` | these should be the same as the ones that appear in events, and match on the prefix so subtypes, eg `note/text` and `note/html` will both match on `note`.
+|`pubkeys:<one>;<two>;...\n`  | list of pubkeys to only return results from
+|`tags:\n` | these end with a second newline
+|`<key>:<value>[;...]\n` | only the value can be searched for, and must be semicolon separated for multiple matches
+|`...` | several tags can be present, they will act as OR
+|`\n` | tags end with a second newline
+|====
+
+NOTE: **There is no timestamp field in a `subscribe`.**
+
+After a subscribe request the relay will send an acknowledgement:
+
+.subscribed response
+[options="header"]
+|====
+| Message | Description
+|`subscribed:<subscription id>\n` |
+|====
+
+To close a subscription the client sends an `unsubscribe`:
+
+.unsubscribe request
+[options="header"]
+|====
+| Message | Description
+|`unsubscribe:<subscription id>\n` |
+|====
+
 
 IMPORTANT: Direct messages, for example, are privileged and can only be sent in response to a query or subscription signed with one of the keys appearing in the message (author or recipient/s)
 
-An empty filter is not valid for a `filter`, a full event dump could instead be a separate API as this is an intensive operation that should be restricted to administrators.
-For this reason an empty `subscribe` is implicitly "from now".
+The `subscribe` query streams back results containing just the event ID hash, in the following message:
 
-The `subscribe` query streams back results containing just the event ID hash.
+.subscription response
+[options="header"]
+|====
+| Message | Description
+|`subscription:<subscription id>:<event id>\n` |
+|====
+
+
 The client can then send an `events` query to actually fetch the data.
 This enables collecting a list and indicating the count without consuming the bandwidth for it until the view is opened.
 
-=== `fulltext` Query
+==== `fulltext` Query
 
 A fulltext query is just `fulltext:` followed by a series of space separated tokens if the event store has a full text index, terminated with a newline.
 
