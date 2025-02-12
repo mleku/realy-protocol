@@ -226,7 +226,7 @@ As per implementation, each capability should be part of a registered list of me
 
 === Use in Data Storage
 
-The encoding is already suitable for encoding to a database, it is optional to use a somewhat more compact binary encoding, especially if the database has good compression like ZST, which will flatten tables of these values quite effectively.
+The encoding is already suitable for encoding to a database, it is optional to use a somewhat more compact binary encoding, especially if the database has good compression like ZST, which will flatten tables of these values quite effectively, with little overhead cost for lowered complexity..
 
 === Tags
 
@@ -242,7 +242,7 @@ Every REALY protocol should be simple and precise, and use HTTP for request/resp
 
 The list of protocols below can be expanded to add new categories. The design should be as general as possible for each to isolate the application features from the relay processing cleanly.
 
-=== Publication
+== Publication Protocols
 
 === store, update and relay
 
@@ -270,14 +270,14 @@ Events that are returned have the `<subscription Id>:<Event Id>\n` as the first 
 
 There is four basic types of queries in REALY, derived from the `nostr` design, but refined and separated into distinct, small API calls.
 
-=== Queries
+== Query Protocols
 
-==== events
+=== events
 
 A key concept in REALY protocol is minimising the footprint of each API call.
 Thus, a primary query type is the simple request for a list of events by their ID hash:
 
-===== Request
+==== Request
 
 .events request
 [options="header"]
@@ -294,7 +294,7 @@ Normally clients will gather a potentially longer list of events and then send E
 
 The results are returned as a series as follows, for each item returned:
 
-===== Response
+==== Response
 
 .events response
 [options="header"]
@@ -304,11 +304,11 @@ The results are returned as a series as follows, for each item returned:
 |`<event>\n`| the full event text as described previously
 |====
 
-==== filter
+=== filter
 
 A filter has one or more of the fields listed below, and headed with `filter`:
 
-===== Request
+==== Request
 
 .filter request
 [options="header"]
@@ -326,7 +326,7 @@ A filter has one or more of the fields listed below, and headed with `filter`:
 
 The response message is simply a list of the matching events IDs, which are expected to be in reverse chronological order:
 
-===== Response
+==== Response
 
 .filter response
 [options="header"]
@@ -337,7 +337,7 @@ The response message is simply a list of the matching events IDs, which are expe
 |`...` | ...any number of events further.
 |====
 
-==== subscribe
+=== subscribe
 
 `subscribe` means to request to be sent events that match a filter, from the moment the request is received. Mixing queries and subscriptions is a bad idea because it makes it difficult to specify the expected behaviour from a relay, or client. Thus, a subset of the `filter` is used. The subscription ends when the client sends `unsubscribe` message.
 
@@ -390,7 +390,7 @@ The `subscribe` query streams back results containing just the event ID hash, in
 The client can then send an `events` query to actually fetch the data.
 This enables collecting a list and indicating the count without consuming the bandwidth for it until the view is opened.
 
-==== `fulltext` Query
+=== fulltext
 
 A fulltext query is just `fulltext:` followed by a series of space separated tokens if the event store has a full text index, terminated with a newline.
 
