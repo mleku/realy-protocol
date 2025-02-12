@@ -144,6 +144,8 @@ The signing key does not have to be identifying, but it serves as a HMAC for the
 
 Thus access control becomes simple, and privacy also equally simple if the relay is public access to read, the client should default to one-shot keys for each request.
 
+=== Authentication Message Format
+
 Authenticating messages, for simplicity, is a simple message suffix.
 
 .Authenticated Message Encoding
@@ -161,9 +163,11 @@ For simplicity, the signature is on a separate line, just as it is in the event 
 
 For reasons of security, a relay should not allow a time skew in the timestamp of more than 15 seconds.
 
-The signature is upon the Blake 2b message hash of everything up to the semicolon preceding it, and only relates to the HTTP POST payload, not including the header.
+The signature is upon the Blake 2b message hash of everything up to and including the newline preceding it, and only relates to the HTTP POST payload, not including the header.
 
 Even subscription messages should be signed the same way, to avoid needing a secondary protocol. "open" relays that have no access control (which is retarded, but just to be complete) must still require this authentication message, but simply the client can use one-shot keys to sign with, as it also serves as a HMAC to validate the consistency of the request data, since it is based on the hash.
+
+IMPORTANT: One shot keys for requests and publications is recommended especially for the case of users of Tor accessing relays, as this ensures traffic that emerges from the same exit or comes to the same hidden service looks the same. However, it should be also pointed out that a client is likely to query for one specific pubkey on a fairly regular basis which should be considered with respect to triggering the use of a new path in the tor connection (or other anonymizing protocol).
 
 == Capability Messages
 
@@ -175,6 +179,8 @@ One of the biggest mistakes in the design of `nostr` is precisely in the blurrin
 The `COUNT` and `AUTH` protocol method types have this property.
 Their structure is defined by an implicit data point - the sender of the message, which means parsing the message isn't just identifying it but also reading context.
 
+=== Capability Request
+
 .Capability Request
 [Options="header"]
 |====
@@ -182,21 +188,29 @@ Their structure is defined by an implicit data point - the sender of the message
 | `capability\n` |
 |====
 
+=== Capability Response
+
 .Capability Response
 [Options="header"]
 |====
 | Message | Description
 | `capabilities\n` |
-| `tags:\`| use the same syntax as in events
-| `<protocol name>:vX.X.X;<URL of protocol spec>;<flag,...>\n` | Protocol name and version, the protocol spec URL.
+| `tags:\n`| use the same syntax as in events
+| `<protocol name><URL of protocol spec>;:vX.X.X;` | Protocol name and version, the protocol spec URL.
 
 _The protocol name must be identical to the message header used in the protocol._
 
 The version number should be a tag on the commit at the URL that matches the version specified.
 
-`flag,...` for relevant flags on the protocol, for example `auth-required`, so for a `filter` this means "authenticate to read".
-| `\n` |
+| `<flag,...>` | `flag,...` for relevant flags on the protocol, for example `whitelisted`, so for a `filter` this means "authenticate to read as whitelisted user". All messages must be authenticated, but without this flag any user can use this protocol on this relay.
+
+By maintaining a very small, method-based definition of protocols, complex flags are not required, in some case, unnecessary
+
+| `\n` | Each protocol spec ends with a newline.
+| `\n` | `tags:\n`  blocks always end with a (further) newline.
 |====
+
+NOTE: Because lists of event Ids are relatively small, there should be no need for a limit on a filter with at least one parameter, even if it may yield a > 500kb message this is trivial considering the client can keep this and use it for a long time without needing to do that query again. _This is the reason for separating the filter and fulltext-search from the event retrieval syntax._
 
 Protocol names should be defined in the same sense as a set of API calls - the details of how to write that exactly differs somewhat for different languages (and may involve checks not native to the language) but they should map to something along similar lines as a link:https://go.dev[_Go⌯_] `interface{}`
 
@@ -263,7 +277,7 @@ The use of specific different types of store requests eliminates the complexity 
 A relay can also only allow one of these, such as a pure relay, which only accepts `relay` requests but neither `store` nor `replace`, or any combination of these.
 The available API calls should be listed in the `capability` response
 
-An event is then acknowledged to be stored or rejected with a message `ok:<true/false>;<Event Id>;<reason type>:human readable part` where the reason type is one of a set of common types to indicate the reason for the false
+An event is then acknowledged to be stored or rejected with a message `ok:<true/false>;<Event Id>;<reason type>:human readable part` where the reason type is one of a set of common types to indicate the reason for the false.
 
 Events that are returned have the `<subscription Id>:<Event Id>\n` as the first line, and then the event in the format described above afterwards.
 
