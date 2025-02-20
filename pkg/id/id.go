@@ -9,19 +9,19 @@ import (
 
 const Len = 43
 
-type P struct{ b []byte }
+type T struct{ b []byte }
 
-func New(id []byte) (p *P, err error) {
+func New(id []byte) (p *T, err error) {
 	if len(id) != ed25519.PublicKeySize {
 		err = errorf.E("invalid public key size: %d; require %d",
 			len(id), ed25519.PublicKeySize)
 		return
 	}
-	p = &P{id}
+	p = &T{id}
 	return
 }
 
-func (p *P) Marshal(d []byte) (r []byte, err error) {
+func (p *T) Marshal(d []byte) (r []byte, err error) {
 	r = d
 	if p == nil || p.b == nil || len(p.b) == 0 {
 		err = errorf.E("nil/zero length pubkey")
@@ -40,11 +40,12 @@ func (p *P) Marshal(d []byte) (r []byte, err error) {
 	if err = w.Close(); chk.E(err) {
 		return
 	}
-	r = append(buf.Bytes(), '\n')
+	r = append(r, buf.Bytes()...)
+	// r = append(buf.Bytes(), '\n')
 	return
 }
 
-func (p *P) Unmarshal(data []byte) (r []byte, err error) {
+func (p *T) Unmarshal(data []byte) (r []byte, err error) {
 	r = data
 	if p == nil {
 		err = errorf.E("can't unmarshal into nil types.T")

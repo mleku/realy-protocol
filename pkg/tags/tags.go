@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"fmt"
 
+	"protocol.realy.lol/pkg/decimal"
+	"protocol.realy.lol/pkg/separator"
 	"protocol.realy.lol/pkg/tag"
 )
 
-const Sentinel = "tags:\n"
+const Sentinel = "tags:"
 
 var SentinelBytes = []byte(Sentinel)
 
@@ -17,15 +19,24 @@ type T struct{ tags }
 
 func New(v ...*tag.T) *T { return &T{tags: v} }
 
-func (t *T) Marshal(dst []byte) (result []byte, err error) {
-	result = dst
-	result = append(result, Sentinel...)
-	for _, tt := range t.tags {
-		if result, err = tt.Marshal(result); chk.E(err) {
-			return
+func (t *T) Marshal(dst []byte) (r []byte, err error) {
+	r = dst
+	r = append(r, Sentinel...)
+	var l int
+	if t != nil {
+		l = len(t.tags)
+	}
+	if r, err = decimal.New(l).Marshal(r); chk.E(err) {
+		return
+	}
+	r = separator.Add(r)
+	if t != nil {
+		for _, tt := range t.tags {
+			if r, err = tt.Marshal(r); chk.E(err) {
+				return
+			}
 		}
 	}
-	result = append(result, '\n')
 	return
 }
 
@@ -34,20 +45,23 @@ func (t *T) Unmarshal(data []byte) (rem []byte, err error) {
 		err = fmt.Errorf("bytes too short to contain tags")
 		return
 	}
-	var dat []byte
+	var d []byte
 	if bytes.Equal(data[:len(Sentinel)], SentinelBytes) {
-		dat = data[len(Sentinel):]
+		d = data[len(Sentinel):]
 	}
-	if len(dat) < 1 {
+	l := decimal.New(0)
+	if d, err = l.Unmarshal(d); chk.E(err) {
 		return
 	}
-	for len(dat) > 0 {
-		if len(dat) == 1 && dat[0] == '\n' {
-			break
-		}
-		// log.I.S(dat)
+	// and then there must be a newline
+	if d[0] != '\n' {
+		err = errorf.E("must be newline after content:<length>:\n%n", d)
+		return
+	}
+	d = d[1:]
+	for range l.N {
 		tt := new(tag.T)
-		if dat, err = tt.Unmarshal(dat); chk.E(err) {
+		if d, err = tt.Unmarshal(d); chk.E(err) {
 			return
 		}
 		t.tags = append(t.tags, tt)

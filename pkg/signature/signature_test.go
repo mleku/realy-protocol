@@ -5,6 +5,8 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"testing"
+
+	"protocol.realy.lol/pkg/separator"
 )
 
 func TestS_Marshal_Unmarshal(t *testing.T) {
@@ -22,6 +24,7 @@ func TestS_Marshal_Unmarshal(t *testing.T) {
 		if o, err = s.Marshal(nil); chk.E(err) {
 			t.Fatal(err)
 		}
+		o = separator.Add(o)
 		p2 := &S{}
 		var rem []byte
 		if rem, err = p2.Unmarshal(o); chk.E(err) {

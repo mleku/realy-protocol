@@ -1,5 +1,11 @@
 = REALY Protocol
 :toc:
+:important-caption: 🔥
+:note-caption: 🗩
+:tip-caption: 💡
+:caution-caption: ⚠
+:table-caption: 🔍
+:example-caption: 🥚
 
 image:https://img.shields.io/badge/godoc-documentation-blue.svg[Documentation,link=https://pkg.go.dev/protocol.realy.lol]
 image:https://img.shields.io/badge/matrix-chat-green.svg[matrix chat,link=https://matrix.to/#/#realy-general:matrix.org]
@@ -229,10 +235,10 @@ As per implementation, each capability should be part of a registered list of me
 | `<type name>\n` | can be anything, hierarchic names like `note/html` `note/md` are possible, or `type.subtype` or whatever
 | `<pubkey>\n` | encoded in URL-base64 with the padding single `=` elided
 | `<unix second precision timestamp in decimal ascii>\n` |
-| `tags:\n`| Tags are a zero or more length list of lines delimited by this header and a new line after the content
+| `tags:<number>\n`| Tags has the number of tags present, and then one linebreak for each tag
 | `key:value;extra;...\n` | zero or more line separated, fields cannot contain a semicolon, end with newline instead of semicolon, key lowercase alphanumeric, first alpha, no whitespace or symbols, only key and following `:` are mandatory
 | `\n` | tags end with a double linebreak
-| `content:\n` | literally this word on one line *directly* after the newline of the previous
+| `content:<length>\n` | literally this word on one line *directly* after the newline of the previous
 | `<content>\n` | any number of further line breaks, last line is signature, everything before signature line is part of the canonical hash
 2+^| The canonical form is the above, creating the message hash that is generated with Blake 2b
 | `<ed25519 signature encoded in URL-base64>\n` | this field would have two padding chars `==`, these should be elided before generating the encoding.

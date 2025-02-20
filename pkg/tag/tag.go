@@ -27,10 +27,34 @@ func New[V ~[]byte | ~string](v ...V) (t *T, err error) {
 	t.fields = append(t.fields, k)
 	for i, val := range v {
 		var b []byte
+		// log.I.S(val)
 		if b, err = ValidateField(val, i); chk.E(err) {
 			return
 		}
 		t.fields = append(t.fields, b)
+	}
+	return
+}
+
+func (t *T) Len() int           { return len(t.fields) }
+func (t *T) Less(i, j int) bool { return bytes.Compare(t.fields[i], t.fields[j]) < 0 }
+func (t *T) Swap(i, j int)      { t.fields[i], t.fields[j] = t.fields[j], t.fields[i] }
+
+func (t *T) GetElementBytes(i int) (s []byte) {
+	if i >= len(t.fields) {
+		// return empty string if not found
+		return
+	}
+	return t.fields[i]
+}
+
+func (t *T) GetElementString(i int) (s string) {
+	return string(t.GetElementBytes(i))
+}
+
+func (t *T) GetStringSlice() (s []string) {
+	for _, v := range t.fields {
+		s = append(s, string(v))
 	}
 	return
 }

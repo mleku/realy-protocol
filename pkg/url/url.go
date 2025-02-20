@@ -27,7 +27,7 @@ func (u *U) Equal(u2 *U) bool { return bytes.Equal(u.uu, u2.uu) }
 // Marshal a URL, use New to ensure it is valid beforehand. Appends a terminal
 // newline.
 func (u *U) Marshal(dst []byte) (result []byte, err error) {
-	result = append(append(dst, u.uu...), '\n')
+	result = append(dst, u.uu...)
 	return
 }
 

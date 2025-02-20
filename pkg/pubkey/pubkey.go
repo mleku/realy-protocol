@@ -32,7 +32,7 @@ func (p *P) Marshal(d []byte) (r []byte, err error) {
 			len(p.PublicKey), ed25519.PublicKeySize, p.PublicKey)
 		return
 	}
-	buf := bytes.NewBuffer(r)
+	buf := new(bytes.Buffer)
 	w := base64.NewEncoder(base64.RawURLEncoding, buf)
 	if _, err = w.Write(p.PublicKey); chk.E(err) {
 		return
@@ -40,7 +40,9 @@ func (p *P) Marshal(d []byte) (r []byte, err error) {
 	if err = w.Close(); chk.E(err) {
 		return
 	}
-	r = append(buf.Bytes(), '\n')
+	// log.I.S(buf.Bytes())
+	r = append(r, buf.Bytes()...)
+	// r = append(buf.Bytes(), '\n')
 	return
 }
 

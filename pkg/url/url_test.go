@@ -2,6 +2,8 @@ package url
 
 import (
 	"testing"
+
+	"protocol.realy.lol/pkg/separator"
 )
 
 func TestU_Marshal_Unmarshal(t *testing.T) {
@@ -15,6 +17,7 @@ func TestU_Marshal_Unmarshal(t *testing.T) {
 	if m1, err = u1.Marshal(nil); chk.E(err) {
 		t.Fatal(err)
 	}
+	m1 = separator.Add(m1)
 	u2 := new(U)
 	var rem []byte
 	if rem, err = u2.Unmarshal(m1); chk.E(err) {

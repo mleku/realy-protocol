@@ -18,7 +18,7 @@ func (t *T) Marshal(d []byte) (r []byte, err error) {
 	if t == nil {
 		return
 	}
-	r = append(append(d, t.t...), '\n')
+	r = append(d, t.t...)
 	return
 }
 
@@ -39,7 +39,7 @@ func (t *T) Unmarshal(d []byte) (r []byte, err error) {
 			// write read data up to the newline and return the remainder after
 			// the newline.
 			t.t = r[:i]
-			r = r[i+1:]
+			r = r[i:]
 			return
 		}
 	}

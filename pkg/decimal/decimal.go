@@ -70,6 +70,7 @@ func (n *T) Marshal(d []byte) (r []byte, err error) {
 		r = append(r, bb...)
 		n.N = n.N - q*powers[k].N
 	}
+	// r = append(r, '\n')
 	n.N = nn
 	return
 }

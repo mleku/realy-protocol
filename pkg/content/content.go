@@ -20,7 +20,7 @@ func (c *C) Marshal(d []byte) (r []byte, err error) {
 	r = append(r, '\n')
 	// log.I.S(r)
 	r = append(r, c.Content...)
-	r = append(r, '\n')
+	// r = append(r, '\n')
 	// log.I.S(r)
 	return
 }
