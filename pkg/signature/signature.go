@@ -8,6 +8,7 @@ import (
 )
 
 const Len = 86
+const Sentinel = "sig:"
 
 type S struct{ Signature []byte }
 
@@ -48,6 +49,7 @@ func (p *S) Marshal(d []byte) (r []byte, err error) {
 	if err = w.Close(); chk.E(err) {
 		return
 	}
+	r = append(r, Sentinel...)
 	r = append(r, buf.Bytes()...)
 	// r = append(buf.Bytes(), '\n')
 	return
@@ -65,16 +67,18 @@ func (p *S) Unmarshal(d []byte) (r []byte, err error) {
 	}
 	for i := range r {
 		if r[i] == '\n' {
-			if i != Len {
+			if i != Len+len(Sentinel) {
 				err = errorf.E("invalid encoded signature length %d; require %d '%0x'",
 					i, Len, r[:i])
 				return
 			}
+			// discard the sentinel
+			r = r[len(Sentinel):]
 			p.Signature = make([]byte, ed25519.SignatureSize)
-			if _, err = base64.RawURLEncoding.Decode(p.Signature, r[:i]); chk.E(err) {
+			if _, err = base64.RawURLEncoding.Decode(p.Signature, r[:Len]); chk.E(err) {
 				return
 			}
-			r = r[i+1:]
+			r = r[Len:]
 			return
 		}
 	}

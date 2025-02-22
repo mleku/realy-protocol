@@ -78,7 +78,7 @@ func (e *E) Encode(d []byte) (r []byte, err error) {
 	if r, err = e.Type.Marshal(r); chk.E(err) {
 		return
 	}
-	r = separator.Add(r)
+	r = separator.Add(r, ':')
 	if e.Pubkey == nil {
 		err = errorf.E("pubkey is not defined for event")
 		return
@@ -87,7 +87,7 @@ func (e *E) Encode(d []byte) (r []byte, err error) {
 	if r, err = e.Pubkey.Marshal(r); chk.E(err) {
 		return
 	}
-	r = separator.Add(r)
+	r = separator.Add(r, ';')
 	if e.Timestamp == nil {
 		err = errorf.E("timestamp is not defined for event")
 		return

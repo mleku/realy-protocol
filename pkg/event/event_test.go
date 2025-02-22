@@ -152,7 +152,7 @@ func GenerateTags(rng *rand.Rand, n int) (t *tags.T, err error) {
 }
 
 func GenerateEvent(sign signer.I) (ev *E, err error) {
-	s2 := rand.NewPCG(uint64(time.Now().UnixNano()), seed)
+	s2 := rand.NewPCG(seed, seed)
 	rng := rand.New(s2)
 	sign = new(p256k.Signer)
 	if err = sign.Generate(); chk.E(err) {
@@ -198,7 +198,7 @@ func TestE_Marshal_Unmarshal(t *testing.T) {
 			t.Fatal(err)
 		}
 		log.I.F("\n```\n%s```\n", b1)
-		log.I.S(ev)
+		// log.I.S(ev)
 		b1 = b1[:0]
 		_ = b2
 	}

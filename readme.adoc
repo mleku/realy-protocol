@@ -83,12 +83,9 @@ To save space and eliminate the need for ugly `=` padding characters, we invoke 
 In this case, it is used for IDs and pubkeys (32 bytes payload each, 43 characters base64 raw URL encoded) and signatures (64 bytes payload, 86 characters base64 raw URL encoded) - the further benefit here is the exact same string can be used in HTTP GET parameters `?key=value&...` context.
 The standard `=` padding would break this usage as well.
 
-For ease of human usage, also, it is recommended when the value is printed in plain text that it be on its own line so triple click catches all of it including the normally word-wise separated `-` hyphen/minus character, as follows:
+For those who can't find a "raw" codec for base64, the 32 byte length has 1 `=` pad suffix and the 64 byte length has 2: `==` and this can be trimmed off and added back to conform to this requirement.
 
-    CF4I5dXYPZ_lu2pYRjey1QMDmgNJEyT-MM8Vvj6EnZM
-
-For those who can't find a "raw" codec for base64, the 32 byte length has 1`=` pad suffix and the 64 byte length has 2: `==` and this can be trimmed off and added back to conform to this requirement.
-Due to the fact that potentially there can be hundreds if not thousands of these in event content and tag fields the benefit can be quite great, as well as the benefit of being able to use these codes also in URL parameter values.
+Due to the fact that potentially there can be hundreds if not thousands of these in event content and tag fields the benefit can be quite great, as well as the benefit of being able to use these codes also in URL parameter values - 43 bytes is not so much more than 32 binary bytes and because it is an even number base it is also cheaper to decode.
 
 === HTTP for Request/Response, Websockets for Push and Subscriptions
 
@@ -175,6 +172,12 @@ Even subscription messages should be signed the same way, to avoid needing a sec
 
 IMPORTANT: One shot keys for requests and publications is recommended especially for the case of users of Tor accessing relays, as this ensures traffic that emerges from the same exit or comes to the same hidden service looks the same. However, it should be also pointed out that a client is likely to query for one specific pubkey on a fairly regular basis which should be considered with respect to triggering the use of a new path in the tor connection (or other anonymizing protocol).
 
+== RESTful APIs
+
+HTTP conveniently allows for the use of paths, and a list of key/values for parameters where necessary, to enable a query to stay entirely within the context of a HTTP GET request.
+
+As such, most queries can be identified simply by the path they refer to, instead of the messaging needing to additionally conatin this context.
+
 == Capability Messages
 
 Capabilities are an important concept for an open, extensible network protocol.
@@ -185,35 +188,27 @@ One of the biggest mistakes in the design of `nostr` is precisely in the blurrin
 The `COUNT` and `AUTH` protocol method types have this property.
 Their structure is defined by an implicit data point - the sender of the message, which means parsing the message isn't just identifying it but also reading context.
 
-=== Capability Request
-
-.Capability Request
-[Options="header"]
-|====
-| Message | Description
-| `capability\n` |
-|====
+Capability *must* be provided at the `/capability` path of the relay's web server path scheme.
 
 === Capability Response
+
+The message that is sent back from a GET request at `/capability` should be as follows:
 
 .Capability Response
 [Options="header"]
 |====
 | Message | Description
-| `capabilities\n` |
-| `tags:\n`| use the same syntax as in events
-| `<protocol name><URL of protocol spec>;:vX.X.X;` | Protocol name and version, the protocol spec URL.
+| `<protocol name>:<URL of protocol spec>;vX.X.X;` | Protocol name and version, the protocol spec URL.
 
 _The protocol name must be identical to the message header used in the protocol._
 
 The version number should be a tag on the commit at the URL that matches the version specified.
 
-| `<flag,...>` | `flag,...` for relevant flags on the protocol, for example `whitelisted`, so for a `filter` this means "authenticate to read as whitelisted user". All messages must be authenticated, but without this flag any user can use this protocol on this relay.
+| `<flag>[=<value>];...>` | `flag,...` for relevant flags on the protocol, for example `whitelisted`, so for a `filter` this means "authenticate to read as whitelisted user". All messages must be authenticated, but without this flag any user can use this protocol on this relay. The last flag ends with a newline, not a semicolon.
 
-By maintaining a very small, method-based definition of protocols, complex flags are not required, in some case, unnecessary
+By maintaining a very small, method-based definition of protocols, complex flags are not required, in many cases, unnecessary
 
 | `\n` | Each protocol spec ends with a newline.
-| `\n` | `tags:\n`  blocks always end with a (further) newline.
 |====
 
 NOTE: Because lists of event Ids are relatively small, there should be no need for a limit on a filter with at least one parameter, even if it may yield a > 500kb message this is trivial considering the client can keep this and use it for a long time without needing to do that query again. _This is the reason for separating the filter and fulltext-search from the event retrieval syntax._
@@ -232,29 +227,50 @@ As per implementation, each capability should be part of a registered list of me
 [options="header,footer"]
 |====
 | Message | Description
-| `<type name>\n` | can be anything, hierarchic names like `note/html` `note/md` are possible, or `type.subtype` or whatever
-| `<pubkey>\n` | encoded in URL-base64 with the padding single `=` elided
-| `<unix second precision timestamp in decimal ascii>\n` |
-| `tags:<number>\n`| Tags has the number of tags present, and then one linebreak for each tag
+| `<type name>:` | can be anything, hierarchic names like `note/html` `note/md` are possible, or `type.subtype` or whatever
+| `<pubkey>;` | encoded in URL-base64 with the padding single `=` elided
+| `<unix second precision timestamp in decimal ascii>\n` | this ends the first line of the event format
+2+^| tags follow, they end with `\ncontent:<length>`; the end of tags and beginning of content
 | `key:value;extra;...\n` | zero or more line separated, fields cannot contain a semicolon, end with newline instead of semicolon, key lowercase alphanumeric, first alpha, no whitespace or symbols, only key and following `:` are mandatory
-| `\n` | tags end with a double linebreak
-| `content:<length>\n` | literally this word on one line *directly* after the newline of the previous
+| `content:<length>\n` | literally this word on one line *directly* after the newline of the previous, the length value refers to *after* the newline and the end of it MUST be a newline and then the signature
 | `<content>\n` | any number of further line breaks, last line is signature, everything before signature line is part of the canonical hash
-2+^| The canonical form is the above, creating the message hash that is generated with Blake 2b
-| `<ed25519 signature encoded in URL-base64>\n` | this field would have two padding chars `==`, these should be elided before generating the encoding.
+2+^| The canonical form is the above, creating the message hash that is generated with SHA256
+| `sig:<BIP-340 secp256k1 schnorr signature encoded in unpadded URL-base64>\n` | this field would have two padding chars `==`, these should be elided before generating the encoding. The length is always 86 characters/bytes.
 |====
+
+==== Example
+
+```
+note/adoc:6iiJMRHgRA4SZcc7Jg-k8kD81tJQYpM1saUykC5YCDs;1740226569
+event:V6zWuopmz3D7pWZyqTZOZtIHlq8LrLAToWNZ9wBbnLo;root
+event:4g6hb5mpNXupjigkdYU_vim9rnmUhR_mibfkpPs5d2A;root
+event:jjBUzkXZkD9vwmHqwsCzQP07o-npo-4F-ciA0pWrJr8;root
+pubkey:DLAJqN-E2n1OLP1gXDnMk2lgra6qYGTULuIJk4KriCk
+pubkey:j5L8SIYV3yQPhHkp4vbFSTUh4kEbeL9SfZM8CGk5lMs
+hashtag:Megan Boswell
+hashtag:#AEWGrandSlam
+hashtag:2024 BMW
+hashtag:Censure
+content:449
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+
+Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+sig:OX5r0PdsC6p1dXf1Jr225O5bDupLGA-ZGKKxC59GOtqMPXfW9HZQPhURMe24WdrciWwJ0j7R7WWnuS32xFUyjA
+```
 
 === Use in Data Storage
 
-The encoding is already suitable for encoding to a database, it is optional to use a somewhat more compact binary encoding, especially if the database has good compression like ZST, which will flatten tables of these values quite effectively, with little overhead cost for lowered complexity..
+The encoding is already suitable for encoding to a database, it is optional to use a somewhat more compact binary encoding, especially if the database has good compression like ZST, which will flatten tables of these values quite effectively, with little overhead cost for lowered complexity.
 
 === Tags
 
-Event ID hashes will be encoded in URL-base64 where used in tags or mentioned in content with the prefix `e:`.
-Public keys must be prefixed with `p:` Tag keys should be intelligible words and a specification for their structure should be defined by users of them and shared with other REALY devs.
+Tags are simply a list of `<key>:<field>[;<field>]...\n` and the terminator is the sentinel `\ncontent:<length>\n`
 
-NOTE: Indexing tag keys should be done with a truncated Blake2b hash cut at 8 bytes in the event store, keys should be short and thus the chances of collisions are practically zero.
-Blake2b is required so it is a good choice to use.
+Common tags would include `event` and `pubkey` and `hashtag` - these are guidelines, the specifics of tag content and syntax is tied to the type, the first string at the top of the event, as described above.
 
 == Protocols
 
